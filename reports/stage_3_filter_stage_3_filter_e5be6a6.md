@@ -1,4 +1,4 @@
-# Stage Report: stage_3_filter (stage_3_filter_79799b2)
+# Stage Report: stage_3_filter (stage_3_filter_e5be6a6)
 
 ## 1. Summary
 This report documents verified performance for **stage_3_filter** in the Audio Token Pipeline (`atp`). All values are dynamically queried from `catalog.duckdb`, `reports/coverage.json`, and git metadata.
@@ -17,11 +17,11 @@ This report documents verified performance for **stage_3_filter** in the Audio T
 - **RAM:** 16.0 GB
 - **Python Version:** 3.11.16
 - **Device Used:** cpu
-- **Git Commit:** `79799b2fc393a73c2a97edcf3b091fd5a0b4a3ba`
+- **Git Commit:** `e5be6a684001708b328d06d0637f1cb7dffa3b1c`
 - **Config Hash:** `a848122e7927d37e`
-- **Run ID:** `stage_3_filter_79799b2`
-- **Start Time (UTC):** `2026-11-18T21:12:46Z`
-- **End Time (UTC):** `2026-11-18T21:12:46Z`
+- **Run ID:** `stage_3_filter_e5be6a6`
+- **Start Time (UTC):** `2026-11-18T21:24:57Z`
+- **End Time (UTC):** `2026-11-18T21:24:57Z`
 - **CI Workflow:** [ci.yml](.github/workflows/ci.yml)
 - **CI Actions Run URL:** [https://github.com/Shyam-SN/audio-token-pipeline/actions/runs/44393660532](https://github.com/Shyam-SN/audio-token-pipeline/actions/runs/44393660532)
 

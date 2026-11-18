@@ -1,6 +1,6 @@
 {
   "stage": "stage_3_filter",
-  "run_id": "stage_3_filter_79799b2",
+  "run_id": "stage_3_filter_e5be6a6",
   "status": "PASS",
   "environment": {
     "machine": "arm64",
@@ -8,12 +8,12 @@
     "python_version": "3.11.16",
     "device_used": "cpu",
     "ram_gb": 16.0,
-    "git_commit": "79799b2fc393a73c2a97edcf3b091fd5a0b4a3ba",
+    "git_commit": "e5be6a684001708b328d06d0637f1cb7dffa3b1c",
     "config_hash": "a848122e7927d37e",
     "ci_workflow": ".github/workflows/ci.yml",
     "ci_run_url": "https://github.com/Shyam-SN/audio-token-pipeline/actions/runs/44393660532",
-    "start_time_utc": "2026-11-18T21:12:46Z",
-    "end_time_utc": "2026-11-18T21:12:46Z"
+    "start_time_utc": "2026-11-18T21:24:57Z",
+    "end_time_utc": "2026-11-18T21:24:57Z"
   },
   "inputs": {
     "dataset": "librispeech",
