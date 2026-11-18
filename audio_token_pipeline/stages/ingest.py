@@ -51,6 +51,7 @@ def compute_audio_loudness_metadata(
     target_lufs: float = -23.0,
     max_gain_db: float = 20.0,
     true_peak_limit_db: float = -1.0,
+    enable_true_peak: bool = True,
 ) -> IngestResult:
     """
     Stream/read audio file to compute EBU R128 integrated loudness, true peak, and required gain.
@@ -89,18 +90,23 @@ def compute_audio_loudness_metadata(
         )
 
     duration_s = float(len(audio)) / float(sr)
-    # ITU-R BS.1770 4x oversampled true peak calculation
-    try:
-        import torchaudio.functional as F
-
-        t_audio = torch.from_numpy(audio.T).float()
-        oversampled = F.resample(t_audio, sr, sr * 4)
-        true_peak_val = float(oversampled.abs().max().item()) if oversampled.numel() > 0 else 0.0
-    except Exception:
-        true_peak_val = float(np.max(np.abs(audio))) if len(audio) > 0 else 0.0
-
-    orig_peak_db = 20.0 * math.log10(max(true_peak_val, 1e-9))
     sample_peak_val = float(np.max(np.abs(audio))) if len(audio) > 0 else 0.0
+
+    if enable_true_peak:
+        # ITU-R BS.1770 4x oversampled true peak calculation
+        try:
+            import torchaudio.functional as F
+
+            t_audio = torch.from_numpy(audio.T).float()
+            oversampled = F.resample(t_audio, sr, sr * 4)
+            peak_val = float(oversampled.abs().max().item()) if oversampled.numel() > 0 else 0.0
+        except Exception:
+            peak_val = sample_peak_val
+    else:
+        # Sample peak (faster, bypasses 4x polyphase oversampling filter)
+        peak_val = sample_peak_val
+
+    orig_peak_db = 20.0 * math.log10(max(peak_val, 1e-9))
 
     # Condition: Silent files (peak < 1e-4) or files under 400ms (< 0.4s)
     # Skip gain and flag LOUDNESS_UNDEFINED instead of quarantining
@@ -167,6 +173,7 @@ def compute_audio_batch(
     target_lufs: float = -23.0,
     max_gain_db: float = 20.0,
     true_peak_limit_db: float = -1.0,
+    enable_true_peak: bool = True,
 ) -> list[IngestResult]:
     """Process a chunk of audio files within a worker process."""
     return [
@@ -176,6 +183,7 @@ def compute_audio_batch(
             target_lufs=target_lufs,
             max_gain_db=max_gain_db,
             true_peak_limit_db=true_peak_limit_db,
+            enable_true_peak=enable_true_peak,
         )
         for sid, fpath in batch
     ]
@@ -252,6 +260,7 @@ def run_ingest(
                 config.ingest.target_lufs,
                 20.0,
                 -1.0,
+                config.ingest.enable_true_peak,
             )
             for chunk in task_chunks
         ]

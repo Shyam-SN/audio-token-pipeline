@@ -75,6 +75,8 @@ def test_filter_snr_threshold() -> None:
 
 
 def test_filter_duplicate_detection() -> None:
+    from audio_token_pipeline.stages.filter import LSHDeduplicator
+
     clean1 = generate_synthetic_clean_speech(duration_s=3.0)
     fp1 = compute_spectral_fingerprint(clean1)
 
@@ -83,6 +85,29 @@ def test_filter_duplicate_detection() -> None:
     fp1_near = compute_spectral_fingerprint(clean1_near)
     sim = float(np.dot(fp1, fp1_near))
     assert sim >= 0.95
+
+    # Time shift perturbations (50ms and 100ms)
+    sr_test = 24000
+    clean_50ms = clean1[int(0.050 * sr_test) :]
+    clean_100ms = clean1[int(0.100 * sr_test) :]
+    sim_50ms = float(np.dot(fp1, compute_spectral_fingerprint(clean_50ms)))
+    sim_100ms = float(np.dot(fp1, compute_spectral_fingerprint(clean_100ms)))
+    assert sim_50ms >= 0.95
+    assert sim_100ms >= 0.95
+
+    # LSHDeduplicator index query
+    lsh = LSHDeduplicator(dim=128, num_tables=8, num_bits=12, threshold=0.95)
+    added_orig, match_orig, _ = lsh.query_and_add("seg_orig", fp1)
+    assert added_orig is True
+    assert match_orig is None
+
+    # Querying 50ms time shift should match original
+    added_shift, match_shift, sim_match = lsh.query_and_add(
+        "seg_shift", compute_spectral_fingerprint(clean_50ms)
+    )
+    assert added_shift is False
+    assert match_shift == "seg_orig"
+    assert sim_match >= 0.95
 
     # Completely different audio
     np.random.seed(999)

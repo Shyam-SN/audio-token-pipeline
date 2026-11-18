@@ -37,6 +37,10 @@ class IngestConfig(BaseModel):
     target_channels: int = 1
     target_lufs: float = -23.0
     resample_quality: str = "soxr_hq"
+    enable_true_peak: bool = Field(
+        default=True,
+        description="Enable 4x oversampled true peak calculation (ITU-R BS.1770-4). If False, sample peak is used.",
+    )
     supported_formats: list[str] = Field(
         default_factory=lambda: ["flac", "mp3", "opus", "ogg", "m4a", "wav"]
     )

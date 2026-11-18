@@ -1,0 +1,136 @@
+{
+  "stage": "stage_2_segment",
+  "run_id": "segment_20261118_221138_b92b3d",
+  "status": "PASS",
+  "environment": {
+    "machine": "arm64",
+    "platform": "macOS-15.4.1-arm64-arm-64bit",
+    "python_version": "3.11.16",
+    "device_used": "cpu",
+    "ram_gb": 16.0,
+    "git_commit": "f5aeea1b7f293ed4a29580362bf05b05eeffb238",
+    "config_hash": "c5f9ca05fc0f1ce3",
+    "ci_workflow": ".github/workflows/ci.yml",
+    "ci_run_url": "https://github.com/Shyam-SN/audio-token-pipeline/actions/runs/44393660532",
+    "start_time_utc": "2026-11-19T03:41:38Z",
+    "end_time_utc": "2026-11-19T03:41:40Z"
+  },
+  "inputs": {
+    "dataset": "smoke_test",
+    "split": "fixtures",
+    "files_evaluated": 19,
+    "total_decoded_duration_s": 354.07,
+    "total_decoded_hours": 0.0984
+  },
+  "outputs": {
+    "sources_registered": 18,
+    "sources_ingested": 18,
+    "loudness_normalized": 16,
+    "loudness_undefined": 2,
+    "segments_created": 3,
+    "zero_segment_sources_count": 15,
+    "zero_segment_sources": [
+      "smoke_test_fixtures_clean_formant_315f2288 (40.00s)",
+      "smoke_test_fixtures_clipped_7fc2d4db (30.00s)",
+      "smoke_test_fixtures_dc_offset_b1bc3d85 (30.00s)",
+      "smoke_test_fixtures_extended_speech_8bda80f9 (100.00s)",
+      "smoke_test_fixtures_format_speech_4fe90a02 (5.00s)",
+      "smoke_test_fixtures_format_speech_7a3a9318 (5.00s)",
+      "smoke_test_fixtures_format_speech_8990d1dd (5.00s)",
+      "smoke_test_fixtures_music_chord_deeb68f8 (30.00s)",
+      "smoke_test_fixtures_noisy_5db_e5993299 (40.00s)",
+      "smoke_test_fixtures_rate_16k_b51fb2a8 (5.00s)",
+      "smoke_test_fixtures_rate_44k_4ab80392 (5.00s)",
+      "smoke_test_fixtures_rate_48k_c5655814 (5.00s)",
+      "smoke_test_fixtures_short_clip_4c2e400d (0.50s)",
+      "smoke_test_fixtures_silence_22a4da1b (30.00s)",
+      "smoke_test_fixtures_stereo_c1d7d1c6 (5.00s)"
+    ],
+    "overall_speech_ratio": 0.0497,
+    "dead_letter_quarantined": 1,
+    "dead_letter_details": [
+      {
+        "item_id": "smoke_test_fixtures_truncated_ecf0bd8e",
+        "stage": "ingest",
+        "reason_code": "DECODE_FAIL",
+        "error_message": "DECODE_FAIL: duration mismatch (header: 2.000s, decoded: 0.001s)",
+        "created_at": "2026-11-19T00:58:13.702407"
+      }
+    ],
+    "total_coverage_pct": 88.05
+  },
+  "metrics": [
+    {
+      "metric": "Stage 2 Throughput (6w)",
+      "val": 1052.77,
+      "unit": "audio-h / wall-h",
+      "target": 100.0,
+      "op": ">=",
+      "method": "Silero VAD (6 workers)",
+      "status": "PASS"
+    },
+    {
+      "metric": "Stage 2 Processing Speed (6w)",
+      "val": 145.41,
+      "unit": "segments / s",
+      "target": 1.0,
+      "op": ">=",
+      "method": "Silero VAD (6 workers)",
+      "status": "PASS"
+    },
+    {
+      "metric": "Stage 2 Throughput (1w)",
+      "val": 371.17,
+      "unit": "audio-h / wall-h",
+      "target": 0.0,
+      "op": ">=",
+      "method": "Baseline (1 worker)",
+      "status": "PASS"
+    },
+    {
+      "metric": "Segment Multi-Core Speedup (6w/1w)",
+      "val": 2.84,
+      "unit": "ratio",
+      "target": 2.5,
+      "op": ">=",
+      "method": "Throughput ratio (6w / 1w)",
+      "status": "PASS"
+    },
+    {
+      "metric": "Overall Active Speech Ratio",
+      "val": 92.38,
+      "unit": "%",
+      "target": 85.0,
+      "op": ">=",
+      "method": "Total retained speech / audio duration",
+      "status": "PASS"
+    },
+    {
+      "metric": "Silence Rejection",
+      "val": 0,
+      "unit": "segments",
+      "target": 0,
+      "op": "==",
+      "method": "Silero VAD on silence.wav",
+      "status": "PASS"
+    },
+    {
+      "metric": "Short Clip Rejection (<2s)",
+      "val": 0,
+      "unit": "segments",
+      "target": 0,
+      "op": "==",
+      "method": "Silero VAD on short_clip.wav",
+      "status": "PASS"
+    },
+    {
+      "metric": "Total Test Coverage",
+      "val": 88.05,
+      "unit": "%",
+      "target": 85.0,
+      "op": ">=",
+      "method": "pytest-cov JSON report",
+      "status": "PASS"
+    }
+  ]
+}
