@@ -36,8 +36,10 @@ htmlcov/
 # Local databases & data
 *.duckdb
 *.duckdb.wal
-data/
-downloads/
+/data/
+/downloads/
+!audio_token_pipeline/data/
+!audio_token_pipeline/data/*
 bench/results/*.parquet
 
 # OS specific

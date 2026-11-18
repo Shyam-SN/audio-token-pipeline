@@ -258,7 +258,17 @@ def run_segment(
 
     if not rows:
         logger.info("No sources found for segmentation.")
-        return {"items_in": 0, "segments_out": 0, "speed_segments_per_sec": 0.0}
+        return {
+            "items_in": 0,
+            "segments_out": 0,
+            "total_audio_seconds": 0.0,
+            "elapsed_seconds": 0.0,
+            "throughput_audio_hours_per_wall_hour": 0.0,
+            "speed_segments_per_second": 0.0,
+            "avg_speech_ratio": 0.0,
+            "zero_segment_sources": [],
+            "workers": workers,
+        }
 
     total_seconds = 0.0
     max_sec = (max_hours * 3600.0) if max_hours else float("inf")
