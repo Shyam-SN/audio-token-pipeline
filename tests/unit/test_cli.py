@@ -1,6 +1,7 @@
 """Unit tests for the Typer CLI commands."""
 
 from typer.testing import CliRunner
+
 from audio_token_pipeline.cli import app
 
 runner = CliRunner()
@@ -31,3 +32,4 @@ def test_cli_run_stub() -> None:
     result = runner.invoke(app, ["run", "--device", "cpu"])
     assert result.exit_code == 0
     assert "Starting ATP Pipeline" in result.stdout
+

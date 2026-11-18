@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Generator
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -49,7 +49,7 @@ class Catalog:
                     channels INTEGER,
                     sha256 VARCHAR NOT NULL,
                     status VARCHAR DEFAULT 'PENDING',
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
                 );
 
                 CREATE TABLE IF NOT EXISTS dead_letter (
@@ -57,15 +57,15 @@ class Catalog:
                     stage VARCHAR NOT NULL,
                     reason_code VARCHAR NOT NULL,
                     error_message VARCHAR,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
                 );
 
                 CREATE TABLE IF NOT EXISTS runs (
                     run_id VARCHAR PRIMARY KEY,
                     stage VARCHAR NOT NULL,
                     config_hash VARCHAR NOT NULL,
-                    start_time TIMESTAMP,
-                    end_time TIMESTAMP,
+                    start_time TIMESTAMPTZ,
+                    end_time TIMESTAMPTZ,
                     items_in INTEGER DEFAULT 0,
                     items_out INTEGER DEFAULT 0,
                     status VARCHAR,
@@ -79,7 +79,7 @@ class Catalog:
                     end_ms INTEGER NOT NULL,
                     duration_s DOUBLE NOT NULL,
                     speech_prob DOUBLE,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
                 );
 
                 CREATE TABLE IF NOT EXISTS filter_results (
@@ -91,7 +91,7 @@ class Catalog:
                     dc_offset DOUBLE,
                     speech_prob DOUBLE,
                     reason_codes VARCHAR,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
                 );
 
                 CREATE TABLE IF NOT EXISTS transcripts (
@@ -100,7 +100,7 @@ class Catalog:
                     language VARCHAR,
                     avg_logprob DOUBLE,
                     no_speech_prob DOUBLE,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
                 );
 
                 CREATE TABLE IF NOT EXISTS tokens (
@@ -109,7 +109,7 @@ class Catalog:
                     num_codebooks INTEGER NOT NULL,
                     num_frames INTEGER NOT NULL,
                     storage_path VARCHAR,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
                 );
 
                 CREATE TABLE IF NOT EXISTS shards (
@@ -120,7 +120,7 @@ class Catalog:
                     total_duration_s DOUBLE NOT NULL,
                     total_tokens BIGINT NOT NULL,
                     sha256 VARCHAR NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
                 );
             """)
 
@@ -172,7 +172,7 @@ class Catalog:
                     error_message = EXCLUDED.error_message,
                     created_at = EXCLUDED.created_at;
                 """,
-                [item_id, stage, reason_code, error_message or "", datetime.utcnow()],
+                [item_id, stage, reason_code, error_message or "", datetime.now(UTC)],
             )
 
     def start_run(self, run_id: str, stage: str, config_hash: str) -> None:
@@ -183,7 +183,7 @@ class Catalog:
                 INSERT INTO runs (run_id, stage, config_hash, start_time, status)
                 VALUES (?, ?, ?, ?, 'RUNNING');
                 """,
-                [run_id, stage, config_hash, datetime.utcnow()],
+                [run_id, stage, config_hash, datetime.now(UTC)],
             )
 
     def finish_run(
@@ -206,7 +206,7 @@ class Catalog:
                     error = ?
                 WHERE run_id = ?;
                 """,
-                [datetime.utcnow(), status, items_in, items_out, error, run_id],
+                [datetime.now(UTC), status, items_in, items_out, error, run_id],
             )
 
     def get_stage_status_summary(self) -> dict[str, Any]:

@@ -32,6 +32,7 @@ def download_file_resumable(
     dest_path: Path,
     expected_sha256: str | None = None,
     progress_callback: Callable[[int], None] | None = None,
+    client: httpx.Client | None = None,
 ) -> Path:
     """
     Download a file with HTTP Range support for resumption and optional SHA-256 verification.
@@ -46,8 +47,9 @@ def download_file_resumable(
     if existing_bytes > 0:
         headers["Range"] = f"bytes={existing_bytes}-"
 
-    with httpx.Client(follow_redirects=True, timeout=60.0) as client:
-        with client.stream("GET", url, headers=headers) as response:
+    def _execute_download(c: httpx.Client) -> None:
+        nonlocal existing_bytes
+        with c.stream("GET", url, headers=headers) as response:
             if response.status_code == 416:  # Range Not Satisfiable -> already completed
                 pass
             elif response.status_code not in (200, 206):
@@ -64,6 +66,12 @@ def download_file_resumable(
                     f.write(chunk)
                     if progress_callback:
                         progress_callback(len(chunk))
+
+    if client is not None:
+        _execute_download(client)
+    else:
+        with httpx.Client(follow_redirects=True, timeout=60.0) as default_client:
+            _execute_download(default_client)
 
     if expected_sha256:
         calculated_sha = compute_file_sha256(temp_path)

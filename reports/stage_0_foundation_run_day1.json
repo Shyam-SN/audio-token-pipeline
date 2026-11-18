@@ -1,6 +1,6 @@
 {
   "stage": "stage_0_foundation",
-  "run_id": "day1_foundation_e24fe2f",
+  "run_id": "day1_foundation_rev2",
   "status": "PASS",
   "environment": {
     "machine": "MacBook Air",
@@ -8,26 +8,37 @@
     "ram_gb": 16.0,
     "os": "macOS-15.4.1-arm64",
     "python_version": "3.11.16",
+    "numpy_version": "2.4.6",
+    "pyarrow_version": "26.0.1",
     "torch_version": "2.15.0",
     "duckdb_version": "2.0.0",
     "device_used": "cpu",
-    "git_commit": "e24fe2f",
+    "git_commit": "fe12e10",
     "config_hash": "62bf143a537fbdcb"
   },
   "inputs": {
-    "dataset": "smoke_test_fixtures",
+    "dataset": "extended_smoke_fixtures",
     "split": "fixtures",
-    "num_files": 8,
-    "total_duration_s": 300.5,
-    "total_audio_hours": 0.0835
+    "num_files": 19,
+    "total_duration_s": 358.7,
+    "total_audio_hours": 0.0996,
+    "fixture_breakdown": {
+      "standard_conditions": ["clean_formant.wav", "silence.wav", "clipped.wav", "dc_offset.wav", "noisy_5db.wav", "music_chord.wav", "short_clip.wav", "extended_speech.wav"],
+      "sample_rates": ["rate_16k.wav", "rate_44k.wav", "rate_48k.wav"],
+      "channels": ["stereo.wav"],
+      "formats": ["format_speech.flac", "format_speech.mp3", "format_speech.opus"],
+      "faulty": ["truncated.wav"],
+      "real_librispeech_dev_clean": ["librispeech_1272-128104-0000.flac", "librispeech_1272-128104-0001.flac", "librispeech_1272-128104-0002.flac"]
+    }
   },
   "outputs": {
-    "items_in": 8,
-    "items_out": 8,
+    "items_in": 19,
+    "items_out": 19,
     "manifest_path": "data/manifest.parquet",
-    "test_suite_passed": 21,
+    "test_suite_passed": 26,
     "test_suite_failed": 0,
-    "test_suite_duration_s": 1.41
+    "test_suite_duration_s": 1.49,
+    "total_project_coverage_pct": 86.0
   },
   "metrics": [
     {
@@ -39,16 +50,16 @@
       "status": "PASS"
     },
     {
-      "name": "catalog_coverage",
-      "value": 100.0,
+      "name": "total_project_coverage",
+      "value": 86.0,
       "unit": "%",
       "type": "Measured",
       "target": 85.0,
       "status": "PASS"
     },
     {
-      "name": "cache_coverage",
-      "value": 93.0,
+      "name": "catalog_coverage",
+      "value": 100.0,
       "unit": "%",
       "type": "Measured",
       "target": 85.0,
@@ -63,8 +74,32 @@
       "status": "PASS"
     },
     {
-      "name": "smoke_fixture_duration",
-      "value": 300.5,
+      "name": "cache_coverage",
+      "value": 93.0,
+      "unit": "%",
+      "type": "Measured",
+      "target": 85.0,
+      "status": "PASS"
+    },
+    {
+      "name": "download_io_coverage",
+      "value": 80.0,
+      "unit": "%",
+      "type": "Measured",
+      "target": 75.0,
+      "status": "PASS"
+    },
+    {
+      "name": "resumable_download_checksum_pass_rate",
+      "value": 100.0,
+      "unit": "%",
+      "type": "Measured",
+      "target": 100.0,
+      "status": "PASS"
+    },
+    {
+      "name": "valid_fixture_duration",
+      "value": 358.7,
       "unit": "seconds",
       "type": "Measured",
       "target": 300.0,
