@@ -1,0 +1,82 @@
+# Configuration for 1,000+ hour scale benchmark
+version: "0.1.0"
+catalog_path: "catalog.duckdb"
+cache_dir: ".cache/atp"
+
+device:
+  device: "cuda"
+  num_workers: 8
+  pin_memory: true
+  memory_limit_gb: 14.0
+
+dataset:
+  name: "librilight_multilingual"
+  split: "1000h_bench"
+  urls: []
+  download_dir: "data/raw/bench_1000h"
+  manifest_path: "data/manifest.parquet"
+  license: "CC-BY-4.0"
+  max_hours: 1000.0
+
+ingest:
+  target_sample_rate: 24000
+  target_channels: 1
+  target_lufs: -23.0
+  resample_quality: "soxr_hq"
+  supported_formats: ["flac", "mp3", "opus", "ogg", "m4a", "wav"]
+
+segment:
+  vad_model: "silero_vad"
+  vad_threshold: 0.5
+  sample_rate: 16000
+  min_speech_duration_s: 2.0
+  max_speech_duration_s: 30.0
+  speech_pad_s: 0.2
+  energy_split_window_s: 0.5
+
+filter:
+  max_silence_ratio: 0.40
+  max_clip_fraction: 0.001
+  clip_threshold: 0.999
+  min_snr_db: 10.0
+  max_dc_offset: 0.01
+  min_duration_s: 2.0
+  max_duration_s: 30.0
+  duplicate_similarity_threshold: 0.95
+  min_speech_prob: 0.60
+  whisper_expected_lang: null
+
+transcribe:
+  model_name: "large-v3-turbo"
+  backend: "faster-whisper"
+  compute_type: "float16"
+  min_avg_logprob: -1.0
+  max_no_speech_prob: 0.6
+  bucket_batch_size: 64
+  max_padding_ratio: 0.10
+
+tokenize:
+  codec: "mimi"
+  target_bandwidth: 12.5
+  num_codebooks: 8
+  sample_rate: 24000
+  dtype: "int16"
+  batch_size: 32
+  queue_size: 64
+
+shard:
+  target_shard_size_mb: 1024
+  output_dir: "data/shards"
+  version: "v0.1.0"
+  shard_pattern: "atp-{version}-{split}-{shard_id:06d}.tar"
+  train_val_split_seed: 42
+  val_ratio: 0.05
+
+feed:
+  token_budget_per_batch: 65536
+  shuffle_buffer_size: 10000
+  num_workers: 8
+  probe_model_layers: 4
+  probe_model_dim: 512
+  max_steps: 1000
+  target_max_stall_pct: 3.0
