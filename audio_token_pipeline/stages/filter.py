@@ -477,18 +477,22 @@ def run_filter(
         ]
         for fut in as_completed(futures):
             chunk_results = fut.result()
-            for r in chunk_results:
+            for chunk_res in chunk_results:
                 # Deduplication check across chunk boundaries
-                if r.passed and r.exact_hash:
-                    if r.exact_hash in global_seen_exact:
-                        r.passed = False
-                        r.reason_codes.append("DUPLICATE_EXACT")
+                if chunk_res.passed and chunk_res.exact_hash:
+                    if chunk_res.exact_hash in global_seen_exact:
+                        chunk_res.passed = False
+                        chunk_res.reason_codes.append("DUPLICATE_EXACT")
                     else:
-                        global_seen_exact.add(r.exact_hash)
-                        if r.near_duplicate_hash:
+                        global_seen_exact.add(chunk_res.exact_hash)
+                        if chunk_res.near_duplicate_hash:
                             try:
                                 fp = np.array(
-                                    [float(x) for x in r.near_duplicate_hash.split(",") if x],
+                                    [
+                                        float(x)
+                                        for x in chunk_res.near_duplicate_hash.split(",")
+                                        if x
+                                    ],
                                     dtype=np.float32,
                                 )
                                 for prev_id, prev_fp in global_seen_near.items():
@@ -497,14 +501,16 @@ def run_filter(
                                         and float(np.dot(fp, prev_fp))
                                         >= config.filter.duplicate_similarity_threshold
                                     ):
-                                        r.passed = False
-                                        r.reason_codes.append(f"DUPLICATE_NEAR:{prev_id[:8]}")
+                                        chunk_res.passed = False
+                                        chunk_res.reason_codes.append(
+                                            f"DUPLICATE_NEAR:{prev_id[:8]}"
+                                        )
                                         break
-                                if r.passed:
-                                    global_seen_near[r.segment_id] = fp
+                                if chunk_res.passed:
+                                    global_seen_near[chunk_res.segment_id] = fp
                             except Exception:
                                 pass
-                all_results.append(r)
+                all_results.append(chunk_res)
 
     # Atomic write to catalog (main process only)
     db_records = [
@@ -536,8 +542,8 @@ def run_filter(
 
     # Aggregate rejection reasons
     reason_counts: dict[str, int] = {}
-    for r in rejected_items:
-        for code in r.reason_codes:
+    for rej_res in rejected_items:
+        for code in rej_res.reason_codes:
             base_code = code.split(":")[0]
             reason_counts[base_code] = reason_counts.get(base_code, 0) + 1
 

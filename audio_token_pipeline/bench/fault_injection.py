@@ -6,7 +6,7 @@ import json
 import logging
 import math
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 
@@ -39,7 +39,7 @@ def generate_synthetic_clean_speech(duration_s: float = 3.0, sr: int = 24000) ->
     peak = np.max(np.abs(audio))
     if peak > 1e-4:
         audio = (audio / peak) * 0.5
-    return audio.astype(np.float32)
+    return cast(np.ndarray, audio.astype(np.float32))
 
 
 def inject_noise_at_snr(audio: np.ndarray, target_snr_db: float) -> np.ndarray:
@@ -79,7 +79,9 @@ def inject_silence_padding(audio: np.ndarray, target_silence_ratio: float) -> np
     silence_chunk = np.zeros(silence_len, dtype=np.float32)
     # Split audio and insert silence in middle
     mid = active_len // 2
-    return np.concatenate([audio[:mid], silence_chunk, audio[mid:]]).astype(np.float32)
+    return cast(
+        np.ndarray, np.concatenate([audio[:mid], silence_chunk, audio[mid:]]).astype(np.float32)
+    )
 
 
 def inject_dc_offset(audio: np.ndarray, offset: float) -> np.ndarray:
