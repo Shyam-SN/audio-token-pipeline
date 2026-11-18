@@ -139,8 +139,7 @@ def build_manifest_parquet(
     audio_extensions = {".flac", ".wav", ".mp3", ".ogg", ".opus", ".m4a"}
 
     files = [
-        p for p in audio_dir.rglob("*")
-        if p.is_file() and p.suffix.lower() in audio_extensions
+        p for p in audio_dir.rglob("*") if p.is_file() and p.suffix.lower() in audio_extensions
     ]
     files.sort()
 

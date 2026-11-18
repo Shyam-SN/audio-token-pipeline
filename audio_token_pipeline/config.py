@@ -13,9 +13,13 @@ from pydantic import BaseModel, Field
 
 class DeviceConfig(BaseModel):
     device: Literal["auto", "cpu", "mps", "cuda"] = "auto"
-    num_workers: int = Field(default=6, ge=1, description="Number of worker processes for CPU stages")
+    num_workers: int = Field(
+        default=6, ge=1, description="Number of worker processes for CPU stages"
+    )
     pin_memory: bool = True
-    memory_limit_gb: float = Field(default=14.0, description="Max RAM consumption flag threshold (Mac M4 is 16GB)")
+    memory_limit_gb: float = Field(
+        default=14.0, description="Max RAM consumption flag threshold (Mac M4 is 16GB)"
+    )
 
 
 class DatasetConfig(BaseModel):

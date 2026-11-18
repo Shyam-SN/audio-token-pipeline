@@ -50,8 +50,7 @@ def find_lowest_energy_split(audio_16k: np.ndarray, start_sample: int, end_sampl
         return (start_sample + end_sample) // 2
 
     energies = [
-        float(np.sum(window[i * frame_size : (i + 1) * frame_size] ** 2))
-        for i in range(num_frames)
+        float(np.sum(window[i * frame_size : (i + 1) * frame_size] ** 2)) for i in range(num_frames)
     ]
     min_idx = int(np.argmin(energies))
     return start_sample + (min_idx * frame_size) + (frame_size // 2)
@@ -71,12 +70,24 @@ def segment_audio_file(
     """
     fpath = Path(filepath)
     if not fpath.is_file():
-        return SegmentResult(source_id=source_id, segments=[], speech_ratio=0.0, total_audio_s=0.0, error="File missing")
+        return SegmentResult(
+            source_id=source_id,
+            segments=[],
+            speech_ratio=0.0,
+            total_audio_s=0.0,
+            error="File missing",
+        )
 
     try:
         audio, sr = sf.read(str(fpath), dtype="float32", always_2d=True)
     except Exception as e:
-        return SegmentResult(source_id=source_id, segments=[], speech_ratio=0.0, total_audio_s=0.0, error=f"Decode fail: {e}")
+        return SegmentResult(
+            source_id=source_id,
+            segments=[],
+            speech_ratio=0.0,
+            total_audio_s=0.0,
+            error=f"Decode fail: {e}",
+        )
 
     # Convert to mono by averaging channels
     if audio.shape[1] > 1:
@@ -188,14 +199,16 @@ def segment_audio_file(
             start_ms = int(round((reg["start"] / 16000.0) * 1000.0))
             end_ms = int(round((reg["end"] / 16000.0) * 1000.0))
             dur_s = round((end_ms - start_ms) / 1000.0, 4)
-            segments.append({
-                "segment_id": f"{source_id}_seg_{seg_idx:05d}",
-                "source_id": source_id,
-                "start_ms": start_ms,
-                "end_ms": end_ms,
-                "duration_s": dur_s,
-                "speech_prob": round(mean_prob, 4),
-            })
+            segments.append(
+                {
+                    "segment_id": f"{source_id}_seg_{seg_idx:05d}",
+                    "source_id": source_id,
+                    "start_ms": start_ms,
+                    "end_ms": end_ms,
+                    "duration_s": dur_s,
+                    "speech_prob": round(mean_prob, 4),
+                }
+            )
             seg_idx += 1
 
     # Compute final active speech ratio from retained speech segments
@@ -254,7 +267,9 @@ def run_segment(
     if not rows:
         # Fall back to any registered sources
         with cat.connection() as con:
-            rows = con.execute("SELECT source_id, filepath, duration_s FROM sources ORDER BY source_id").fetchall()
+            rows = con.execute(
+                "SELECT source_id, filepath, duration_s FROM sources ORDER BY source_id"
+            ).fetchall()
 
     if not rows:
         logger.info("No sources found for segmentation.")
@@ -279,10 +294,13 @@ def run_segment(
         pending_tasks.append((r[0], r[1]))
         total_seconds += float(r[2]) if r[2] else 0.0
 
-    logger.info(f"Segmenting {len(pending_tasks)} sources using {workers} workers (ProcessPoolExecutor)...")
+    logger.info(
+        f"Segmenting {len(pending_tasks)} sources using {workers} workers (ProcessPoolExecutor)..."
+    )
     git_sha = ""
     try:
         import subprocess
+
         git_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     except Exception:
         pass
@@ -296,7 +314,9 @@ def run_segment(
     zero_segment_sources: list[str] = []
 
     chunk_size = max(1, len(pending_tasks) // (workers * 4)) if workers > 1 else len(pending_tasks)
-    task_chunks = [pending_tasks[i : i + chunk_size] for i in range(0, len(pending_tasks), chunk_size)]
+    task_chunks = [
+        pending_tasks[i : i + chunk_size] for i in range(0, len(pending_tasks), chunk_size)
+    ]
 
     with ProcessPoolExecutor(max_workers=workers, initializer=worker_init) as executor:
         futures = [

@@ -20,8 +20,12 @@ def test_segment_silence_produces_zero_segments() -> None:
 
 def test_segment_short_clip_produces_zero_segments() -> None:
     # 0.5s audio is under the min_speech_duration_s (2.0s) threshold
-    res = segment_audio_file("short_clip", str(FIXTURES_DIR / "short_clip.wav"), min_speech_duration_s=2.0)
-    assert len(res.segments) == 0, f"Expected 0 segments for 0.5s short clip, got {len(res.segments)}"
+    res = segment_audio_file(
+        "short_clip", str(FIXTURES_DIR / "short_clip.wav"), min_speech_duration_s=2.0
+    )
+    assert len(res.segments) == 0, (
+        f"Expected 0 segments for 0.5s short clip, got {len(res.segments)}"
+    )
 
 
 def test_segment_librispeech_speech_ratio() -> None:
@@ -32,7 +36,9 @@ def test_segment_librispeech_speech_ratio() -> None:
     for l_file in libri_files:
         res = segment_audio_file(l_file.stem, str(l_file))
         assert len(res.segments) >= 1, f"Expected at least 1 speech segment for {l_file.name}"
-        assert res.speech_ratio >= 0.85, f"Expected speech ratio >= 0.85 for {l_file.name}, got {res.speech_ratio}"
+        assert res.speech_ratio >= 0.85, (
+            f"Expected speech ratio >= 0.85 for {l_file.name}, got {res.speech_ratio}"
+        )
         for s in res.segments:
             # Check real Silero probability is stored, not 1.0
             prob = s["speech_prob"]
@@ -97,7 +103,9 @@ def test_segment_music_chord_log_result() -> None:
     music_file = FIXTURES_DIR / "music_chord.wav"
     if music_file.exists():
         res = segment_audio_file("music_chord", str(music_file))
-        print(f"\n[VAD Music Evaluation] segments={len(res.segments)}, speech_ratio={res.speech_ratio}")
+        print(
+            f"\n[VAD Music Evaluation] segments={len(res.segments)}, speech_ratio={res.speech_ratio}"
+        )
         assert res.error is None
 
 

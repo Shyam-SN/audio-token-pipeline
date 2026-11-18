@@ -76,4 +76,3 @@ def test_run_ingest_pipeline(tmp_path: Path) -> None:
     res = run_ingest(cfg, num_workers=1)
     assert res["items_in"] == 1
     assert res["items_out"] == 1
-

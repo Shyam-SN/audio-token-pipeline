@@ -27,7 +27,7 @@
     "sources_ingested": 2703,
     "loudness_normalized": 2703,
     "loudness_undefined": 0,
-    "segments_created": 2676,
+    "segments_created": 2679,
     "zero_segment_sources_count": 37,
     "zero_segment_sources": [
       "librispeech_dev-clean_1272-135031-0009_d23fc0e9 (1.91s)",
@@ -68,26 +68,26 @@
       "librispeech_dev-clean_8297-275155-0021_eaebc5ff (1.77s)",
       "librispeech_dev-clean_8842-304647-0007_560a3e0b (1.73s)"
     ],
-    "overall_speech_ratio": 0.9473,
+    "overall_speech_ratio": 0.9471,
     "dead_letter_quarantined": 0,
     "dead_letter_details": [],
-    "total_coverage_pct": 85.41
+    "total_coverage_pct": 87.27
   },
   "metrics": [
     {
       "metric": "Stage 1 Ingest Throughput (6w)",
       "val": 3399.61,
       "unit": "audio-h / wall-h",
-      "target": 3352.62,
+      "target": 3158.31,
       "op": ">=",
-      "method": "ProcessPoolExecutor (6w) vs >=3x slowest stage (3352.62)",
+      "method": "ProcessPoolExecutor (6w) vs >=3x slowest stage (3158.31)",
       "status": "PASS"
     },
     {
       "metric": "Stage 1 Ingest Throughput (4w)",
       "val": 3488.11,
       "unit": "audio-h / wall-h",
-      "target": 2235.08,
+      "target": 2105.54,
       "op": ">=",
       "method": "ProcessPoolExecutor (4 workers)",
       "status": "PASS"
@@ -96,7 +96,7 @@
       "metric": "Stage 1 Ingest Throughput (2w)",
       "val": 2716.46,
       "unit": "audio-h / wall-h",
-      "target": 1117.54,
+      "target": 1052.77,
       "op": ">=",
       "method": "ProcessPoolExecutor (2 workers)",
       "status": "PASS"
@@ -112,7 +112,7 @@
     },
     {
       "metric": "Ingest vs Slowest Stage Speedup",
-      "val": 3.04,
+      "val": 3.23,
       "unit": "ratio",
       "target": 3.0,
       "op": ">=",
@@ -148,7 +148,7 @@
     },
     {
       "metric": "Total Test Coverage",
-      "val": 85.41,
+      "val": 87.27,
       "unit": "%",
       "target": 85.0,
       "op": ">=",

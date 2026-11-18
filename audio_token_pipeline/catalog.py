@@ -101,8 +101,12 @@ class Catalog:
                     dc_offset DOUBLE,
                     speech_prob DOUBLE,
                     reason_codes VARCHAR,
+                    exact_hash VARCHAR,
+                    near_duplicate_hash VARCHAR,
                     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
                 );
+                ALTER TABLE filter_results ADD COLUMN IF NOT EXISTS exact_hash VARCHAR;
+                ALTER TABLE filter_results ADD COLUMN IF NOT EXISTS near_duplicate_hash VARCHAR;
 
                 CREATE TABLE IF NOT EXISTS transcripts (
                     segment_id VARCHAR PRIMARY KEY,
@@ -160,7 +164,17 @@ class Catalog:
                     sha256 = EXCLUDED.sha256,
                     status = EXCLUDED.status;
                 """,
-                [source_id, filepath, dataset, split, duration_s, sample_rate, channels, sha256, status],
+                [
+                    source_id,
+                    filepath,
+                    dataset,
+                    split,
+                    duration_s,
+                    sample_rate,
+                    channels,
+                    sha256,
+                    status,
+                ],
             )
 
     def update_source_ingest_metadata(
@@ -173,14 +187,18 @@ class Catalog:
         status: str = "INGESTED",
     ) -> None:
         """Update source loudness, true peak, and normalisation gain metadata without saving resampled audio."""
-        self.update_sources_ingest_batch([{
-            "source_id": source_id,
-            "orig_lufs": orig_lufs,
-            "orig_peak_db": orig_peak_db,
-            "gain_db": gain_db,
-            "loudness_status": loudness_status,
-            "status": status,
-        }])
+        self.update_sources_ingest_batch(
+            [
+                {
+                    "source_id": source_id,
+                    "orig_lufs": orig_lufs,
+                    "orig_peak_db": orig_peak_db,
+                    "gain_db": gain_db,
+                    "loudness_status": loudness_status,
+                    "status": status,
+                }
+            ]
+        )
 
     def update_sources_ingest_batch(self, records: list[dict[str, Any]]) -> None:
         """Batch update source loudness, true peak, and normalisation gain metadata atomically."""
@@ -269,6 +287,49 @@ class Catalog:
                 records,
             )
 
+    def record_filter_results_batch(self, results: list[dict[str, Any]]) -> None:
+        """Atomically insert or update quality filtering results into DuckDB."""
+        if not results:
+            return
+        records = [
+            (
+                r["segment_id"],
+                bool(r["passed"]),
+                float(r["silence_ratio"]) if r.get("silence_ratio") is not None else None,
+                float(r["clip_fraction"]) if r.get("clip_fraction") is not None else None,
+                float(r["snr_db"]) if r.get("snr_db") is not None else None,
+                float(r["dc_offset"]) if r.get("dc_offset") is not None else None,
+                float(r["speech_prob"]) if r.get("speech_prob") is not None else None,
+                str(r.get("reason_codes", "")),
+                str(r.get("exact_hash", "")),
+                str(r.get("near_duplicate_hash", "")),
+                datetime.now(UTC),
+            )
+            for r in results
+        ]
+        with self.connection() as con:
+            con.executemany(
+                """
+                INSERT INTO filter_results (
+                    segment_id, passed, silence_ratio, clip_fraction, snr_db,
+                    dc_offset, speech_prob, reason_codes, exact_hash, near_duplicate_hash, created_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (segment_id) DO UPDATE SET
+                    passed = EXCLUDED.passed,
+                    silence_ratio = EXCLUDED.silence_ratio,
+                    clip_fraction = EXCLUDED.clip_fraction,
+                    snr_db = EXCLUDED.snr_db,
+                    dc_offset = EXCLUDED.dc_offset,
+                    speech_prob = EXCLUDED.speech_prob,
+                    reason_codes = EXCLUDED.reason_codes,
+                    exact_hash = EXCLUDED.exact_hash,
+                    near_duplicate_hash = EXCLUDED.near_duplicate_hash,
+                    created_at = EXCLUDED.created_at;
+                """,
+                records,
+            )
+
     def record_dead_letter(
         self,
         item_id: str,
@@ -329,10 +390,16 @@ class Catalog:
         """Query count of items across all pipeline stages and dead letter queue."""
         with self.connection() as con:
             sources_count = con.execute("SELECT count(*) FROM sources;").fetchone()[0]  # type: ignore[index]
-            sources_done = con.execute("SELECT count(*) FROM sources WHERE status = 'DONE';").fetchone()[0]  # type: ignore[index]
+            sources_done = con.execute(
+                "SELECT count(*) FROM sources WHERE status = 'DONE';"
+            ).fetchone()[0]  # type: ignore[index]
             segments_count = con.execute("SELECT count(*) FROM segments;").fetchone()[0]  # type: ignore[index]
-            filtered_passed = con.execute("SELECT count(*) FROM filter_results WHERE passed = true;").fetchone()[0]  # type: ignore[index]
-            filtered_rejected = con.execute("SELECT count(*) FROM filter_results WHERE passed = false;").fetchone()[0]  # type: ignore[index]
+            filtered_passed = con.execute(
+                "SELECT count(*) FROM filter_results WHERE passed = true;"
+            ).fetchone()[0]  # type: ignore[index]
+            filtered_rejected = con.execute(
+                "SELECT count(*) FROM filter_results WHERE passed = false;"
+            ).fetchone()[0]  # type: ignore[index]
             transcripts_count = con.execute("SELECT count(*) FROM transcripts;").fetchone()[0]  # type: ignore[index]
             tokens_count = con.execute("SELECT count(*) FROM tokens;").fetchone()[0]  # type: ignore[index]
             shards_count = con.execute("SELECT count(*) FROM shards;").fetchone()[0]  # type: ignore[index]
@@ -353,7 +420,9 @@ class Catalog:
     def get_dead_letters(self) -> list[dict[str, Any]]:
         """Fetch all dead-letter records."""
         with self.connection() as con:
-            rows = con.execute("SELECT item_id, stage, reason_code, error_message, created_at FROM dead_letter;").fetchall()
+            rows = con.execute(
+                "SELECT item_id, stage, reason_code, error_message, created_at FROM dead_letter;"
+            ).fetchall()
             return [
                 {
                     "item_id": r[0],

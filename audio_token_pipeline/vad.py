@@ -23,7 +23,10 @@ class OnnxSileroVad:
         p = Path(model_path) if model_path else _DEFAULT_MODEL_PATH
         if not p.is_file():
             # Fallback to user home cache if present
-            alt = Path.home() / ".cache/torch/hub/snakers4_silero-vad_master/src/silero_vad/data/silero_vad.onnx"
+            alt = (
+                Path.home()
+                / ".cache/torch/hub/snakers4_silero-vad_master/src/silero_vad/data/silero_vad.onnx"
+            )
             if alt.is_file():
                 p = alt
             else:
@@ -32,7 +35,9 @@ class OnnxSileroVad:
         opts = onnxruntime.SessionOptions()
         opts.inter_op_num_threads = 1
         opts.intra_op_num_threads = 1
-        self.session = onnxruntime.InferenceSession(str(p), providers=["CPUExecutionProvider"], sess_options=opts)
+        self.session = onnxruntime.InferenceSession(
+            str(p), providers=["CPUExecutionProvider"], sess_options=opts
+        )
         self.reset_states()
 
     def reset_states(self, batch_size: int = 1) -> None:
@@ -83,7 +88,9 @@ def get_speech_timestamps_from_probs(
 
     min_speech_samples = sampling_rate * min_speech_duration_ms / 1000
     speech_pad_samples = sampling_rate * speech_pad_ms / 1000
-    max_speech_samples = sampling_rate * max_speech_duration_s - window_size_samples - 2 * speech_pad_samples
+    max_speech_samples = (
+        sampling_rate * max_speech_duration_s - window_size_samples - 2 * speech_pad_samples
+    )
     min_silence_samples = sampling_rate * min_silence_duration_ms / 1000
 
     if neg_threshold is None:
@@ -144,7 +151,10 @@ def get_speech_timestamps_from_probs(
 
     if return_seconds:
         return [
-            {"start": round(s["start"] / sampling_rate, 3), "end": round(s["end"] / sampling_rate, 3)}
+            {
+                "start": round(s["start"] / sampling_rate, 3),
+                "end": round(s["end"] / sampling_rate, 3),
+            }
             for s in speeches
         ]
     return speeches

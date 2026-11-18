@@ -61,7 +61,9 @@ def run_benchmark_1_to_6_workers(
     if "ingest" in stages:
         baseline_ingest_th = 0.0
         for w in worker_counts:
-            print(f"\n=== Benchmarking Stage 1 Ingest ({w} worker{'s' if w > 1 else ''}) [repeated >= {min_runtime_s}s] ===")
+            print(
+                f"\n=== Benchmarking Stage 1 Ingest ({w} worker{'s' if w > 1 else ''}) [repeated >= {min_runtime_s}s] ==="
+            )
             total_audio_s = 0.0
             passes = 0
             last_res: dict[str, Any] = {}
@@ -91,9 +93,13 @@ def run_benchmark_1_to_6_workers(
 
             res_summary["speedup_vs_1w"] = speedup
             results["stage_1_ingest"][f"{w}_worker{'s' if w > 1 else ''}"] = res_summary
-            print(f"Stage 1 ({w}w): {th} audio-h/h ({passes} passes in {elapsed_total:.1f}s, Speedup: {speedup}x)")
+            print(
+                f"Stage 1 ({w}w): {th} audio-h/h ({passes} passes in {elapsed_total:.1f}s, Speedup: {speedup}x)"
+            )
 
-        results["stage_1_ingest"]["speedup_6w_vs_1w"] = results["stage_1_ingest"].get("6_workers", {}).get("speedup_vs_1w", 1.0)
+        results["stage_1_ingest"]["speedup_6w_vs_1w"] = (
+            results["stage_1_ingest"].get("6_workers", {}).get("speedup_vs_1w", 1.0)
+        )
 
     # ==========================================
     # --- Benchmark Stage 2 (Segmentation) ---
@@ -101,14 +107,19 @@ def run_benchmark_1_to_6_workers(
     if "segment" in stages:
         baseline_seg_th = 0.0
         for w in worker_counts:
-            print(f"\n=== Benchmarking Stage 2 Segmentation ({w} worker{'s' if w > 1 else ''}) [repeated >= {min_runtime_s}s] ===")
+            print(
+                f"\n=== Benchmarking Stage 2 Segmentation ({w} worker{'s' if w > 1 else ''}) [repeated >= {min_runtime_s}s] ==="
+            )
             total_audio_s = 0.0
             total_segs = 0
             passes = 0
             last_res = {}
             t_start = time.perf_counter()
 
-            while passes < max(1, repeat_count // 3) or (time.perf_counter() - t_start) < min_runtime_s:
+            while (
+                passes < max(1, repeat_count // 3)
+                or (time.perf_counter() - t_start) < min_runtime_s
+            ):
                 with cat.connection() as con:
                     con.execute("DELETE FROM segments")
                 res = run_segment(cfg, num_workers=w)
@@ -135,9 +146,13 @@ def run_benchmark_1_to_6_workers(
 
             res_summary["speedup_vs_1w"] = speedup
             results["stage_2_segment"][f"{w}_worker{'s' if w > 1 else ''}"] = res_summary
-            print(f"Stage 2 ({w}w): {th} audio-h/h, {spd} seg/s ({passes} passes in {elapsed_total:.1f}s, Speedup: {speedup}x)")
+            print(
+                f"Stage 2 ({w}w): {th} audio-h/h, {spd} seg/s ({passes} passes in {elapsed_total:.1f}s, Speedup: {speedup}x)"
+            )
 
-        results["stage_2_segment"]["speedup_6w_vs_1w"] = results["stage_2_segment"].get("6_workers", {}).get("speedup_vs_1w", 1.0)
+        results["stage_2_segment"]["speedup_6w_vs_1w"] = (
+            results["stage_2_segment"].get("6_workers", {}).get("speedup_vs_1w", 1.0)
+        )
 
     # Save to JSON
     out_file = res_dir / "stage1_stage2_benchmarks.json"
@@ -153,11 +168,14 @@ def run_benchmark_1_and_6_workers(
     results_dir: Path | str = "bench/results",
 ) -> dict[str, Any]:
     """Compatibility wrapper running full [1, 2, 4, 6] worker benchmarks."""
-    return run_benchmark_1_to_6_workers(config_path=config_path, results_dir=results_dir, worker_counts=[1, 2, 4, 6])
+    return run_benchmark_1_to_6_workers(
+        config_path=config_path, results_dir=results_dir, worker_counts=[1, 2, 4, 6]
+    )
 
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser(description="Benchmark Dev-Clean Stages")
     parser.add_argument("config", nargs="?", default="configs/librispeech_dev_clean.yaml")
     parser.add_argument("--stage", choices=["all", "ingest", "segment"], default="all")
@@ -165,4 +183,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     target_stages = ["ingest", "segment"] if args.stage == "all" else [args.stage]
-    run_benchmark_1_to_6_workers(config_path=args.config, worker_counts=args.workers, stages=target_stages)
+    run_benchmark_1_to_6_workers(
+        config_path=args.config, worker_counts=args.workers, stages=target_stages
+    )

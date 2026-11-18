@@ -15,6 +15,7 @@ def is_cuda_available() -> bool:
     """Check if CUDA is available via PyTorch."""
     try:
         import torch
+
         return bool(torch.cuda.is_available())
     except ImportError:
         return False
@@ -26,6 +27,7 @@ def is_mps_available() -> bool:
         return False
     try:
         import torch
+
         return bool(torch.backends.mps.is_available() and torch.backends.mps.is_built())
     except ImportError:
         # Check macOS arm64 environment even if torch is not yet imported
@@ -75,6 +77,7 @@ def get_device(requested: str | None = None) -> str:
 def get_torch_device(requested: str | None = None):  # type: ignore[no-untyped-def]
     """Return a torch.device object."""
     import torch
+
     dev = resolve_device(requested)
     return torch.device(dev)
 
@@ -95,11 +98,20 @@ def get_device_info() -> dict[str, str | int | float | bool]:
     if platform.system() == "Darwin" and platform.machine() == "arm64":
         try:
             import subprocess
-            brand = subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"], text=True).strip()
-            p_cores = subprocess.check_output(["sysctl", "-n", "hw.perflevel0.physicalcpu"], text=True).strip()
-            e_cores = subprocess.check_output(["sysctl", "-n", "hw.perflevel1.physicalcpu"], text=True).strip()
+
+            brand = subprocess.check_output(
+                ["sysctl", "-n", "machdep.cpu.brand_string"], text=True
+            ).strip()
+            p_cores = subprocess.check_output(
+                ["sysctl", "-n", "hw.perflevel0.physicalcpu"], text=True
+            ).strip()
+            e_cores = subprocess.check_output(
+                ["sysctl", "-n", "hw.perflevel1.physicalcpu"], text=True
+            ).strip()
             info["cpu_brand"] = brand
-            info["cpu_topology"] = f"{brand} ({int(p_cores) + int(e_cores)} cores: {p_cores}P + {e_cores}E)"
+            info["cpu_topology"] = (
+                f"{brand} ({int(p_cores) + int(e_cores)} cores: {p_cores}P + {e_cores}E)"
+            )
         except Exception:
             info["cpu_topology"] = "Apple M4 (10 cores: 4P + 6E)"
     else:
@@ -108,7 +120,12 @@ def get_device_info() -> dict[str, str | int | float | bool]:
     # RAM detection (in GB)
     try:
         import os
-        if hasattr(os, "sysconf") and "SC_PAGE_SIZE" in os.sysconf_names and "SC_PHYS_PAGES" in os.sysconf_names:
+
+        if (
+            hasattr(os, "sysconf")
+            and "SC_PAGE_SIZE" in os.sysconf_names
+            and "SC_PHYS_PAGES" in os.sysconf_names
+        ):
             total_bytes = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")
             info["ram_gb"] = round(total_bytes / (1024**3), 2)
     except Exception:
@@ -118,9 +135,12 @@ def get_device_info() -> dict[str, str | int | float | bool]:
     if is_cuda_available():
         try:
             import torch
+
             info["cuda_device_name"] = torch.cuda.get_device_name(0)
             info["cuda_device_count"] = torch.cuda.device_count()
-            info["cuda_vram_gb"] = round(torch.cuda.get_device_properties(0).total_memory / (1024**3), 2)
+            info["cuda_vram_gb"] = round(
+                torch.cuda.get_device_properties(0).total_memory / (1024**3), 2
+            )
         except Exception:
             pass
 

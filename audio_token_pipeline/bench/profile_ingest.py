@@ -11,7 +11,9 @@ from audio_token_pipeline.config import AppConfig
 from audio_token_pipeline.stages.ingest import run_ingest
 
 
-def profile_ingest(config_path: str = "configs/librispeech_dev_clean.yaml", num_workers: int = 6) -> None:
+def profile_ingest(
+    config_path: str = "configs/librispeech_dev_clean.yaml", num_workers: int = 6
+) -> None:
     cfg = AppConfig.from_yaml(config_path)
     out_dir = Path("docs/profiles")
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -36,4 +38,3 @@ def profile_ingest(config_path: str = "configs/librispeech_dev_clean.yaml", num_
 
 if __name__ == "__main__":
     profile_ingest()
-

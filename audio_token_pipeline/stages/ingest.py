@@ -92,6 +92,7 @@ def compute_audio_loudness_metadata(
     # ITU-R BS.1770 4x oversampled true peak calculation
     try:
         import torchaudio.functional as F
+
         t_audio = torch.from_numpy(audio.T).float()
         oversampled = F.resample(t_audio, sr, sr * 4)
         true_peak_val = float(oversampled.abs().max().item()) if oversampled.numel() > 0 else 0.0
@@ -218,10 +219,13 @@ def run_ingest(
         pending_tasks.append((r[0], r[1]))
         total_seconds += float(r[2]) if r[2] else 0.0
 
-    logger.info(f"Ingesting {len(pending_tasks)} sources using {workers} workers (ProcessPoolExecutor)...")
+    logger.info(
+        f"Ingesting {len(pending_tasks)} sources using {workers} workers (ProcessPoolExecutor)..."
+    )
     git_sha = ""
     try:
         import subprocess
+
         git_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     except Exception:
         pass
@@ -233,7 +237,9 @@ def run_ingest(
     total_audio_sec = 0.0
 
     chunk_size = max(1, len(pending_tasks) // (workers * 4)) if workers > 1 else len(pending_tasks)
-    task_chunks = [pending_tasks[i : i + chunk_size] for i in range(0, len(pending_tasks), chunk_size)]
+    task_chunks = [
+        pending_tasks[i : i + chunk_size] for i in range(0, len(pending_tasks), chunk_size)
+    ]
 
     success_records: list[dict[str, Any]] = []
     dead_letter_records: list[dict[str, Any]] = []
@@ -254,21 +260,25 @@ def run_ingest(
             batch_results = fut.result()
             for res in batch_results:
                 if res.status == "FAILED":
-                    dead_letter_records.append({
-                        "item_id": res.source_id,
-                        "stage": "ingest",
-                        "reason_code": res.loudness_status,
-                        "error_message": res.error or "Ingest failed",
-                    })
+                    dead_letter_records.append(
+                        {
+                            "item_id": res.source_id,
+                            "stage": "ingest",
+                            "reason_code": res.loudness_status,
+                            "error_message": res.error or "Ingest failed",
+                        }
+                    )
                 else:
-                    success_records.append({
-                        "source_id": res.source_id,
-                        "orig_lufs": res.orig_lufs,
-                        "orig_peak_db": res.orig_peak_db,
-                        "gain_db": res.gain_db,
-                        "loudness_status": res.loudness_status,
-                        "status": "INGESTED",
-                    })
+                    success_records.append(
+                        {
+                            "source_id": res.source_id,
+                            "orig_lufs": res.orig_lufs,
+                            "orig_peak_db": res.orig_peak_db,
+                            "gain_db": res.gain_db,
+                            "loudness_status": res.loudness_status,
+                            "status": "INGESTED",
+                        }
+                    )
                     total_audio_sec += res.duration_s
                     processed_count += 1
 

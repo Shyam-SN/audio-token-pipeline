@@ -46,7 +46,9 @@ def info() -> None:
 
 @app.command()
 def status(
-    config: Path = typer.Option(Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to YAML config"),
+    config: Path = typer.Option(
+        Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to YAML config"
+    ),
 ) -> None:
     """Display current item counts across all stages in the DuckDB catalog."""
     cfg = AppConfig.from_yaml(config) if config.exists() else AppConfig()
@@ -65,22 +67,31 @@ def status(
     table.add_row("Transcripts Generated", str(summary["transcripts"]))
     table.add_row("Tokens Generated", str(summary["tokens"]))
     table.add_row("WebDataset Shards", str(summary["shards"]))
-    table.add_row("Dead Letter (Quarantine)", f"[red]{summary['dead_letter']}[/red]" if summary['dead_letter'] > 0 else "0")
+    table.add_row(
+        "Dead Letter (Quarantine)",
+        f"[red]{summary['dead_letter']}[/red]" if summary["dead_letter"] > 0 else "0",
+    )
 
     console.print(table)
 
 
 @app.command()
 def download(
-    config: Path = typer.Option(Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"),
-    max_hours: float | None = typer.Option(None, "--max-hours", help="Override max audio hours to scan"),
+    config: Path = typer.Option(
+        Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"
+    ),
+    max_hours: float | None = typer.Option(
+        None, "--max-hours", help="Override max audio hours to scan"
+    ),
 ) -> None:
     """Download or index dataset, verify checksums, and generate manifest."""
     cfg = AppConfig.from_yaml(config) if config.exists() else AppConfig()
     from audio_token_pipeline.io.download import build_manifest_parquet
 
     catalog = Catalog(cfg.catalog_path)
-    console.print(f"[bold blue]Indexing dataset[/bold blue]: {cfg.dataset.name} ({cfg.dataset.split})")
+    console.print(
+        f"[bold blue]Indexing dataset[/bold blue]: {cfg.dataset.name} ({cfg.dataset.split})"
+    )
 
     # If directory has audio, build manifest
     if cfg.dataset.download_dir.exists():
@@ -95,12 +106,16 @@ def download(
         )
         console.print(f"[green]Manifest generated at:[/green] {manifest_file}")
     else:
-        console.print(f"[yellow]Download directory does not exist: {cfg.dataset.download_dir}[/yellow]")
+        console.print(
+            f"[yellow]Download directory does not exist: {cfg.dataset.download_dir}[/yellow]"
+        )
 
 
 @app.command()
 def ingest(
-    config: Path = typer.Option(Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"),
+    config: Path = typer.Option(
+        Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"
+    ),
     workers: int | None = typer.Option(None, "--workers", "-w", help="Number of worker processes"),
     max_hours: float | None = typer.Option(None, "--max-hours", help="Max hours to ingest"),
 ) -> None:
@@ -114,15 +129,26 @@ def ingest(
 
     console.print("[bold blue]Starting Stage 1 (Ingest)...[/bold blue]")
     metrics = run_ingest(cfg, num_workers=workers, max_hours=max_hours)
-    cat.finish_run(run_id=run_id, status="SUCCESS", items_in=metrics["items_in"], items_out=metrics["items_out"])
+    cat.finish_run(
+        run_id=run_id,
+        status="SUCCESS",
+        items_in=metrics["items_in"],
+        items_out=metrics["items_out"],
+    )
 
-    console.print(f"[bold green]Stage 1 Complete:[/bold green] {metrics['items_out']}/{metrics['items_in']} sources ingested.")
-    console.print(f"Throughput: [bold cyan]{metrics['throughput_audio_hours_per_wall_hour']} audio-h / wall-clock-h[/bold cyan] ({metrics['workers']} workers)")
+    console.print(
+        f"[bold green]Stage 1 Complete:[/bold green] {metrics['items_out']}/{metrics['items_in']} sources ingested."
+    )
+    console.print(
+        f"Throughput: [bold cyan]{metrics['throughput_audio_hours_per_wall_hour']} audio-h / wall-clock-h[/bold cyan] ({metrics['workers']} workers)"
+    )
 
 
 @app.command()
 def segment(
-    config: Path = typer.Option(Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"),
+    config: Path = typer.Option(
+        Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"
+    ),
     workers: int | None = typer.Option(None, "--workers", "-w", help="Number of worker processes"),
     max_hours: float | None = typer.Option(None, "--max-hours", help="Max hours to segment"),
 ) -> None:
@@ -136,23 +162,53 @@ def segment(
 
     console.print("[bold blue]Starting Stage 2 (Segmentation)...[/bold blue]")
     metrics = run_segment(cfg, num_workers=workers, max_hours=max_hours)
-    cat.finish_run(run_id=run_id, status="SUCCESS", items_in=metrics["items_in"], items_out=metrics["segments_out"])
+    cat.finish_run(
+        run_id=run_id,
+        status="SUCCESS",
+        items_in=metrics["items_in"],
+        items_out=metrics["segments_out"],
+    )
 
-    console.print(f"[bold green]Stage 2 Complete:[/bold green] {metrics['segments_out']} segments generated across {metrics['items_in']} sources.")
-    console.print(f"Speed: [bold cyan]{metrics['speed_segments_per_second']} segments/s[/bold cyan], avg speech ratio: {metrics['avg_speech_ratio']}")
+    console.print(
+        f"[bold green]Stage 2 Complete:[/bold green] {metrics['segments_out']} segments generated across {metrics['items_in']} sources."
+    )
+    console.print(
+        f"Speed: [bold cyan]{metrics['speed_segments_per_second']} segments/s[/bold cyan], avg speech ratio: {metrics['avg_speech_ratio']}"
+    )
 
 
 @app.command()
 def filter(
-    config: Path = typer.Option(Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"),
+    config: Path = typer.Option(
+        Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"
+    ),
+    workers: int | None = typer.Option(None, "--workers", "-w", help="Number of worker processes"),
+    max_hours: float | None = typer.Option(None, "--max-hours", help="Max hours to filter"),
+    eval_mode: bool = typer.Option(
+        False, "--eval-mode", help="Run in eval mode (compute all scores)"
+    ),
 ) -> None:
     """Stage 3: Multi-metric quality filtering."""
-    console.print("[yellow]Stage 3 (filter) will run in Day 3[/yellow]")
+    from audio_token_pipeline.stages.filter import run_filter
+
+    cfg = AppConfig.from_yaml(config) if config.exists() else AppConfig()
+    console.print(
+        f"[bold blue]Starting Stage 3 Quality Filtering (eval_mode={eval_mode})...[/bold blue]"
+    )
+    metrics = run_filter(cfg, num_workers=workers, max_hours=max_hours, eval_mode=eval_mode)
+    console.print(
+        f"[bold green]Stage 3 Complete:[/bold green] {metrics['items_passed']} passed, {metrics['items_rejected']} rejected ({metrics['rejection_rate_pct']}%)."
+    )
+    console.print(
+        f"Hours: [bold cyan]{metrics['hours_passed']} h passed[/bold cyan] ({metrics['hours_removed']} h removed). Rejections: {metrics['rejections_by_reason']}"
+    )
 
 
 @app.command()
 def transcribe(
-    config: Path = typer.Option(Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"),
+    config: Path = typer.Option(
+        Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"
+    ),
 ) -> None:
     """Stage 4: Whisper transcription with length-bucketed batching."""
     console.print("[yellow]Stage 4 (transcribe) will run in Day 4[/yellow]")
@@ -160,7 +216,9 @@ def transcribe(
 
 @app.command()
 def tokenize(
-    config: Path = typer.Option(Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"),
+    config: Path = typer.Option(
+        Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"
+    ),
 ) -> None:
     """Stage 5: Mimi & EnCodec audio codec tokenisation."""
     console.print("[yellow]Stage 5 (tokenize) will run in Day 5[/yellow]")
@@ -168,7 +226,9 @@ def tokenize(
 
 @app.command()
 def shard(
-    config: Path = typer.Option(Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"),
+    config: Path = typer.Option(
+        Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"
+    ),
 ) -> None:
     """Stage 6: WebDataset sharding and manifest creation."""
     console.print("[yellow]Stage 6 (shard) will run in Day 6[/yellow]")
@@ -176,7 +236,9 @@ def shard(
 
 @app.command()
 def feed_bench(
-    config: Path = typer.Option(Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"),
+    config: Path = typer.Option(
+        Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"
+    ),
 ) -> None:
     """Stage 7: Streaming training feed and probe dataloader stall benchmark."""
     console.print("[yellow]Stage 7 (feed-bench) will run in Day 6[/yellow]")
@@ -184,20 +246,28 @@ def feed_bench(
 
 @app.command()
 def bench(
-    config: Path = typer.Option(Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"),
+    config: Path = typer.Option(
+        Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"
+    ),
 ) -> None:
     """Benchmark Stage 1 (Ingest) and Stage 2 (Segmentation) across 1 vs 6 workers."""
     from audio_token_pipeline.bench.benchmark_dev_clean import run_benchmark_1_and_6_workers
 
-    console.print("[bold blue]Starting Throughput Benchmarks (1 worker vs 6 workers)...[/bold blue]")
+    console.print(
+        "[bold blue]Starting Throughput Benchmarks (1 worker vs 6 workers)...[/bold blue]"
+    )
     run_benchmark_1_and_6_workers(config_path=config)
     console.print("[bold green]Benchmarks complete.[/bold green]")
 
 
 @app.command()
 def report(
-    stage: str = typer.Argument("stage_0_foundation", help="Stage name to report (e.g. stage_0_foundation)"),
-    config: Path = typer.Option(Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"),
+    stage: str = typer.Argument(
+        "stage_0_foundation", help="Stage name to report (e.g. stage_0_foundation)"
+    ),
+    config: Path = typer.Option(
+        Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"
+    ),
 ) -> None:
     """Generate verification reports strictly from captured catalogue and coverage data."""
     from audio_token_pipeline.bench.report import generate_stage_report
@@ -210,7 +280,9 @@ def report(
 
 @app.command()
 def run(
-    config: Path = typer.Option(Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"),
+    config: Path = typer.Option(
+        Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"
+    ),
     max_hours: float | None = typer.Option(None, "--max-hours", help="Override max hours"),
     device: str | None = typer.Option(None, "--device", help="Device override (cpu, mps, cuda)"),
 ) -> None:

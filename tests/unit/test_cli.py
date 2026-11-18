@@ -36,7 +36,7 @@ def test_cli_run_stub() -> None:
 
 
 def test_cli_report() -> None:
-    for stg in ["stage_0_foundation", "stage_1_ingest", "stage_2_segment"]:
+    for stg in ["stage_0_foundation", "stage_1_ingest", "stage_2_segment", "stage_3_filter"]:
         result = runner.invoke(app, ["report", stg])
         assert result.exit_code == 0
         assert "Report generated successfully" in result.stdout
@@ -48,6 +48,15 @@ def test_cli_stage_stubs(monkeypatch: pytest.MonkeyPatch) -> None:
         "audio_token_pipeline.bench.benchmark_dev_clean.run_benchmark_1_and_6_workers",
         lambda *args, **kwargs: {},
     )
-    for cmd in ["ingest", "segment", "filter", "transcribe", "tokenize", "shard", "feed-bench", "bench"]:
+    for cmd in [
+        "ingest",
+        "segment",
+        "filter",
+        "transcribe",
+        "tokenize",
+        "shard",
+        "feed-bench",
+        "bench",
+    ]:
         res = runner.invoke(app, [cmd])
         assert res.exit_code == 0

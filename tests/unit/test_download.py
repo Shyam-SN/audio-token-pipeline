@@ -117,7 +117,9 @@ def test_build_manifest_parquet(tmp_path: Path) -> None:
 
 def test_decode_all_fixtures_integrity() -> None:
     """Test full decoding of every fixture verifying rate, channels, duration and official SHA-256."""
-    fixtures = [p for p in sorted(FIXTURES_DIR.glob("*.*")) if p.suffix not in (".py", ".parquet", ".txt")]
+    fixtures = [
+        p for p in sorted(FIXTURES_DIR.glob("*.*")) if p.suffix not in (".py", ".parquet", ".txt")
+    ]
     assert len(fixtures) == 19, f"Expected 19 fixture files, found {len(fixtures)}"
 
     valid_count = 0
@@ -218,7 +220,7 @@ def test_download_file_resumable_resume(tmp_path: Path) -> None:
                 206,
                 content=slice_data,
                 headers={
-                    "Content-Range": f"bytes {start_offset}-{len(full_content)-1}/{len(full_content)}",
+                    "Content-Range": f"bytes {start_offset}-{len(full_content) - 1}/{len(full_content)}",
                     "Content-Length": str(len(slice_data)),
                 },
             )
@@ -247,7 +249,9 @@ def test_download_file_resumable_http_error(tmp_path: Path) -> None:
     client = httpx.Client(transport=httpx.MockTransport(mock_error_handler))
     out_file = tmp_path / "missing.bin"
 
-    with pytest.raises(RuntimeError, match="Download failed for http://mock.server/missing with status 404"):
+    with pytest.raises(
+        RuntimeError, match="Download failed for http://mock.server/missing with status 404"
+    ):
         download_file_resumable(
             url="http://mock.server/missing",
             dest_path=out_file,

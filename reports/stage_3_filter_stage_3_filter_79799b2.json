@@ -1,6 +1,6 @@
 {
-  "stage": "stage_2_segment",
-  "run_id": "segment_20261118_202430_30ef4e",
+  "stage": "stage_3_filter",
+  "run_id": "stage_3_filter_79799b2",
   "status": "PASS",
   "environment": {
     "machine": "arm64",
@@ -8,12 +8,12 @@
     "python_version": "3.11.16",
     "device_used": "cpu",
     "ram_gb": 16.0,
-    "git_commit": "f469f8662e698277cf402096edd88190a6809aa7",
+    "git_commit": "79799b2fc393a73c2a97edcf3b091fd5a0b4a3ba",
     "config_hash": "a848122e7927d37e",
     "ci_workflow": ".github/workflows/ci.yml",
     "ci_run_url": "https://github.com/Shyam-SN/audio-token-pipeline/actions/runs/44393660532",
-    "start_time_utc": "2026-11-19T01:54:30Z",
-    "end_time_utc": "2026-11-19T01:54:46Z"
+    "start_time_utc": "2026-11-18T21:12:46Z",
+    "end_time_utc": "2026-11-18T21:12:46Z"
   },
   "inputs": {
     "dataset": "librispeech",
@@ -27,7 +27,7 @@
     "sources_ingested": 2703,
     "loudness_normalized": 2703,
     "loudness_undefined": 0,
-    "segments_created": 2676,
+    "segments_created": 2679,
     "zero_segment_sources_count": 37,
     "zero_segment_sources": [
       "librispeech_dev-clean_1272-135031-0009_d23fc0e9 (1.91s)",
@@ -68,78 +68,78 @@
       "librispeech_dev-clean_8297-275155-0021_eaebc5ff (1.77s)",
       "librispeech_dev-clean_8842-304647-0007_560a3e0b (1.73s)"
     ],
-    "overall_speech_ratio": 0.9473,
+    "overall_speech_ratio": 0.9471,
     "dead_letter_quarantined": 0,
     "dead_letter_details": [],
-    "total_coverage_pct": 85.41
+    "total_coverage_pct": 87.27
   },
   "metrics": [
     {
-      "metric": "Stage 2 Throughput (6w)",
-      "val": 1117.54,
-      "unit": "audio-h / wall-h",
-      "target": 100.0,
-      "op": ">=",
-      "method": "Silero VAD (6 workers)",
-      "status": "PASS"
-    },
-    {
-      "metric": "Stage 2 Processing Speed (6w)",
-      "val": 149.86,
-      "unit": "segments / s",
-      "target": 1.0,
-      "op": ">=",
-      "method": "Silero VAD (6 workers)",
-      "status": "PASS"
-    },
-    {
-      "metric": "Stage 2 Throughput (1w)",
-      "val": 363.53,
-      "unit": "audio-h / wall-h",
-      "target": 0.0,
-      "op": ">=",
-      "method": "Baseline (1 worker)",
-      "status": "PASS"
-    },
-    {
-      "metric": "Segment Multi-Core Speedup (6w/1w)",
-      "val": 3.07,
-      "unit": "ratio",
-      "target": 2.5,
-      "op": ">=",
-      "method": "Throughput ratio (6w / 1w)",
-      "status": "PASS"
-    },
-    {
-      "metric": "Overall Active Speech Ratio",
-      "val": 89.89,
+      "metric": "Clean Speech False Reject Rate",
+      "val": 0.0,
       "unit": "%",
-      "target": 85.0,
+      "target": 2.0,
+      "op": "<=",
+      "method": "dev-other clean speech baseline",
+      "status": "PASS"
+    },
+    {
+      "metric": "Clipping Rejection Recall (0.5/2/5%)",
+      "val": 100.0,
+      "unit": "%",
+      "target": 95.0,
       "op": ">=",
-      "method": "Total retained speech / audio duration",
+      "method": "Fault Injection (Runs stuck at peak)",
       "status": "PASS"
     },
     {
-      "metric": "Silence Rejection",
-      "val": 0,
-      "unit": "segments",
-      "target": 0,
-      "op": "==",
-      "method": "Silero VAD on silence.wav",
+      "metric": "Noise Rejection Recall (0/5 dB SNR)",
+      "val": 100.0,
+      "unit": "%",
+      "target": 95.0,
+      "op": ">=",
+      "method": "Fault Injection (WADA-SNR < 10 dB)",
       "status": "PASS"
     },
     {
-      "metric": "Short Clip Rejection (<2s)",
-      "val": 0,
-      "unit": "segments",
-      "target": 0,
-      "op": "==",
-      "method": "Silero VAD on short_clip.wav",
+      "metric": "Silence Rejection Recall (>40% sil)",
+      "val": 100.0,
+      "unit": "%",
+      "target": 95.0,
+      "op": ">=",
+      "method": "Fault Injection (Frame energy < -50 dBFS)",
+      "status": "PASS"
+    },
+    {
+      "metric": "DC Offset Correction & Flagging",
+      "val": 100.0,
+      "unit": "%",
+      "target": 95.0,
+      "op": ">=",
+      "method": "Fault Injection (Offset corrected without reject)",
+      "status": "PASS"
+    },
+    {
+      "metric": "Duplicate Detection Recall",
+      "val": 100.0,
+      "unit": "%",
+      "target": 95.0,
+      "op": ">=",
+      "method": "Fault Injection (Exact SHA-256 + Spectral sim)",
+      "status": "PASS"
+    },
+    {
+      "metric": "Non-Speech Rejection Recall",
+      "val": 100.0,
+      "unit": "%",
+      "target": 95.0,
+      "op": ">=",
+      "method": "Fault Injection (Silero prob < 0.60)",
       "status": "PASS"
     },
     {
       "metric": "Total Test Coverage",
-      "val": 85.41,
+      "val": 87.27,
       "unit": "%",
       "target": 85.0,
       "op": ">=",

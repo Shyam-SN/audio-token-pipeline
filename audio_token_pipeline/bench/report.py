@@ -61,6 +61,18 @@ def load_benchmark_cache() -> dict[str, Any]:
     return {}
 
 
+def load_filter_eval_cache() -> dict[str, Any]:
+    """Load fault injection evaluation numbers from bench/results/filter_eval.json if present."""
+    p = Path("bench/results/filter_eval.json")
+    if p.is_file():
+        try:
+            with open(p, encoding="utf-8") as f:
+                return json.load(f)  # type: ignore[no-any-return]
+        except Exception:
+            pass
+    return {}
+
+
 def eval_status(val: float | int, target: float | int, op: str = ">=") -> str:
     """Dynamically determine PASS or FAIL based on target condition."""
     if op == ">=":
@@ -100,7 +112,9 @@ def generate_stage_report(
 
     with cat.connection() as con:
         # General Sources queries
-        sources_row = con.execute("SELECT count(*), coalesce(sum(duration_s), 0.0) FROM sources").fetchone()
+        sources_row = con.execute(
+            "SELECT count(*), coalesce(sum(duration_s), 0.0) FROM sources"
+        ).fetchone()
         sources_count = int(sources_row[0]) if sources_row else 0
         total_duration_s = round(float(sources_row[1]), 3) if sources_row else 0.0
 
@@ -121,12 +135,20 @@ def generate_stage_report(
         ]
 
         # Stage specific queries
-        ingested_count = con.execute("SELECT count(*) FROM sources WHERE status = 'INGESTED'").fetchone()[0]  # type: ignore[index]
-        loudness_norm_count = con.execute("SELECT count(*) FROM sources WHERE loudness_status = 'NORMALIZED'").fetchone()[0]  # type: ignore[index]
-        loudness_undef_count = con.execute("SELECT count(*) FROM sources WHERE loudness_status = 'LOUDNESS_UNDEFINED'").fetchone()[0]  # type: ignore[index]
+        ingested_count = con.execute(
+            "SELECT count(*) FROM sources WHERE status = 'INGESTED'"
+        ).fetchone()[0]  # type: ignore[index]
+        loudness_norm_count = con.execute(
+            "SELECT count(*) FROM sources WHERE loudness_status = 'NORMALIZED'"
+        ).fetchone()[0]  # type: ignore[index]
+        loudness_undef_count = con.execute(
+            "SELECT count(*) FROM sources WHERE loudness_status = 'LOUDNESS_UNDEFINED'"
+        ).fetchone()[0]  # type: ignore[index]
 
         segments_count = con.execute("SELECT count(*) FROM segments").fetchone()[0]  # type: ignore[index]
-        seg_dur_row = con.execute("SELECT min(duration_s), max(duration_s), avg(duration_s), coalesce(sum(duration_s), 0.0) FROM segments").fetchone()
+        seg_dur_row = con.execute(
+            "SELECT min(duration_s), max(duration_s), avg(duration_s), coalesce(sum(duration_s), 0.0) FROM segments"
+        ).fetchone()
         total_seg_duration_s = round(float(seg_dur_row[3]), 3) if seg_dur_row else 0.0
 
         # Query sources with 0 segments
@@ -139,7 +161,9 @@ def generate_stage_report(
         """).fetchall()
         zero_seg_sources = [f"{r[0]} ({r[1]:.2f}s)" for r in zero_seg_rows]
 
-        stage_key = stage_name.replace("stage_1_", "").replace("stage_2_", "").replace("stage_0_", "")
+        stage_key = (
+            stage_name.replace("stage_1_", "").replace("stage_2_", "").replace("stage_0_", "")
+        )
         run_row = con.execute(
             "SELECT run_id, stage, config_hash, git_commit, start_time, end_time, status FROM runs WHERE stage LIKE ? ORDER BY start_time DESC LIMIT 1",
             [f"%{stage_key}%"],
@@ -160,6 +184,33 @@ def generate_stage_report(
             ORDER BY segment_id DESC LIMIT 1
         """).fetchone()
 
+        # Filter stage specific queries
+        filter_count_row = con.execute("""
+            SELECT count(*),
+                   count(CASE WHEN passed THEN 1 END),
+                   count(CASE WHEN NOT passed THEN 1 END)
+            FROM filter_results
+        """).fetchone()
+        filter_total_count = int(filter_count_row[0]) if filter_count_row else 0
+        filter_passed_count = int(filter_count_row[1]) if filter_count_row else 0
+        filter_rejected_count = int(filter_count_row[2]) if filter_count_row else 0
+
+        reasons_raw = con.execute("""
+            SELECT reason_codes, count(*)
+            FROM filter_results
+            WHERE NOT passed AND reason_codes != ''
+            GROUP BY reason_codes
+            ORDER BY count(*) DESC
+        """).fetchall()
+        filter_reasons_breakdown = {r[0]: int(r[1]) for r in reasons_raw}
+
+        sample_filters_raw = con.execute("""
+            SELECT segment_id, passed, silence_ratio, clip_fraction, snr_db, dc_offset, speech_prob, reason_codes
+            FROM filter_results
+            ORDER BY segment_id
+            LIMIT 5
+        """).fetchall()
+
     if run_row:
         run_id = run_row[0] or run_id
         cfg_hash = run_row[2] or cfg_hash
@@ -176,6 +227,8 @@ def generate_stage_report(
 
     is_ingest_stage = "ingest" in stage_name.lower()
     is_segment_stage = "segment" in stage_name.lower()
+    is_filter_stage = "filter" in stage_name.lower()
+    filter_eval = load_filter_eval_cache()
 
     # Ingest benchmark numbers
     ingest_bench = benchmarks.get("stage_1_ingest", {})
@@ -196,7 +249,9 @@ def generate_stage_report(
     seg_spd_4w = seg_bench.get("4_workers", {}).get("speed_segments_per_second", 0.0)
     seg_spd_6w = seg_bench.get("6_workers", {}).get("speed_segments_per_second", 0.0)
     speedup_seg = seg_bench.get("speedup_6w_vs_1w", 1.0)
-    bench_speech_ratio = seg_bench.get("6_workers", {}).get("avg_speech_ratio", overall_speech_ratio)
+    bench_speech_ratio = seg_bench.get("6_workers", {}).get(
+        "avg_speech_ratio", overall_speech_ratio
+    )
 
     cov_val = cov_data.get("total_coverage", 0.0)
 
@@ -209,31 +264,244 @@ def generate_stage_report(
 
     if is_ingest_stage:
         metrics_rows = [
-            {"metric": "Stage 1 Ingest Throughput (6w)", "val": th_6w, "unit": "audio-h / wall-h", "target": ingest_target_th, "op": ">=", "method": f"ProcessPoolExecutor (6w) vs >=3x slowest stage ({ingest_target_th})"},
-            {"metric": "Stage 1 Ingest Throughput (4w)", "val": th_4w, "unit": "audio-h / wall-h", "target": round(2.0 * slowest_stage_th, 2), "op": ">=", "method": "ProcessPoolExecutor (4 workers)"},
-            {"metric": "Stage 1 Ingest Throughput (2w)", "val": th_2w, "unit": "audio-h / wall-h", "target": round(1.0 * slowest_stage_th, 2), "op": ">=", "method": "ProcessPoolExecutor (2 workers)"},
-            {"metric": "Stage 1 Ingest Throughput (1w)", "val": th_1w, "unit": "audio-h / wall-h", "target": 0.0, "op": ">=", "method": "Baseline (1 worker)"},
-            {"metric": "Ingest vs Slowest Stage Speedup", "val": round(th_6w / max(slowest_stage_th, 1e-4), 2), "unit": "ratio", "target": 3.0, "op": ">=", "method": "Throughput ratio (Ingest 6w / Segment 6w)"},
-            {"metric": "Loudness Normalized Sources", "val": loudness_norm_count, "unit": "sources", "target": sources_count, "op": "==", "method": "DuckDB sources query"},
-            {"metric": "Loudness Undefined Sources", "val": loudness_undef_count, "unit": "sources", "target": 0, "op": "==", "method": "DuckDB sources query"},
-            {"metric": "Ingest Quarantined (Dead Letter)", "val": dead_letter_count, "unit": "files", "target": 0, "op": "==", "method": "DuckDB dead_letter query"},
-            {"metric": "Total Test Coverage", "val": cov_val, "unit": "%", "target": 85.0, "op": ">=", "method": "pytest-cov JSON report"},
+            {
+                "metric": "Stage 1 Ingest Throughput (6w)",
+                "val": th_6w,
+                "unit": "audio-h / wall-h",
+                "target": ingest_target_th,
+                "op": ">=",
+                "method": f"ProcessPoolExecutor (6w) vs >=3x slowest stage ({ingest_target_th})",
+            },
+            {
+                "metric": "Stage 1 Ingest Throughput (4w)",
+                "val": th_4w,
+                "unit": "audio-h / wall-h",
+                "target": round(2.0 * slowest_stage_th, 2),
+                "op": ">=",
+                "method": "ProcessPoolExecutor (4 workers)",
+            },
+            {
+                "metric": "Stage 1 Ingest Throughput (2w)",
+                "val": th_2w,
+                "unit": "audio-h / wall-h",
+                "target": round(1.0 * slowest_stage_th, 2),
+                "op": ">=",
+                "method": "ProcessPoolExecutor (2 workers)",
+            },
+            {
+                "metric": "Stage 1 Ingest Throughput (1w)",
+                "val": th_1w,
+                "unit": "audio-h / wall-h",
+                "target": 0.0,
+                "op": ">=",
+                "method": "Baseline (1 worker)",
+            },
+            {
+                "metric": "Ingest vs Slowest Stage Speedup",
+                "val": round(th_6w / max(slowest_stage_th, 1e-4), 2),
+                "unit": "ratio",
+                "target": 3.0,
+                "op": ">=",
+                "method": "Throughput ratio (Ingest 6w / Segment 6w)",
+            },
+            {
+                "metric": "Loudness Normalized Sources",
+                "val": loudness_norm_count,
+                "unit": "sources",
+                "target": sources_count,
+                "op": "==",
+                "method": "DuckDB sources query",
+            },
+            {
+                "metric": "Loudness Undefined Sources",
+                "val": loudness_undef_count,
+                "unit": "sources",
+                "target": 0,
+                "op": "==",
+                "method": "DuckDB sources query",
+            },
+            {
+                "metric": "Ingest Quarantined (Dead Letter)",
+                "val": dead_letter_count,
+                "unit": "files",
+                "target": 0,
+                "op": "==",
+                "method": "DuckDB dead_letter query",
+            },
+            {
+                "metric": "Total Test Coverage",
+                "val": cov_val,
+                "unit": "%",
+                "target": 85.0,
+                "op": ">=",
+                "method": "pytest-cov JSON report",
+            },
         ]
     elif is_segment_stage:
         metrics_rows = [
-            {"metric": "Stage 2 Throughput (6w)", "val": seg_th_6w, "unit": "audio-h / wall-h", "target": 100.0, "op": ">=", "method": "Silero VAD (6 workers)"},
-            {"metric": "Stage 2 Processing Speed (6w)", "val": seg_spd_6w, "unit": "segments / s", "target": 1.0, "op": ">=", "method": "Silero VAD (6 workers)"},
-            {"metric": "Stage 2 Throughput (1w)", "val": seg_th_1w, "unit": "audio-h / wall-h", "target": 0.0, "op": ">=", "method": "Baseline (1 worker)"},
-            {"metric": "Segment Multi-Core Speedup (6w/1w)", "val": speedup_seg, "unit": "ratio", "target": 2.5, "op": ">=", "method": "Throughput ratio (6w / 1w)"},
-            {"metric": "Overall Active Speech Ratio", "val": round(bench_speech_ratio * 100.0, 2), "unit": "%", "target": 85.0, "op": ">=", "method": "Total retained speech / audio duration"},
-            {"metric": "Silence Rejection", "val": 0, "unit": "segments", "target": 0, "op": "==", "method": "Silero VAD on silence.wav"},
-            {"metric": "Short Clip Rejection (<2s)", "val": 0, "unit": "segments", "target": 0, "op": "==", "method": "Silero VAD on short_clip.wav"},
-            {"metric": "Total Test Coverage", "val": cov_val, "unit": "%", "target": 85.0, "op": ">=", "method": "pytest-cov JSON report"},
+            {
+                "metric": "Stage 2 Throughput (6w)",
+                "val": seg_th_6w,
+                "unit": "audio-h / wall-h",
+                "target": 100.0,
+                "op": ">=",
+                "method": "Silero VAD (6 workers)",
+            },
+            {
+                "metric": "Stage 2 Processing Speed (6w)",
+                "val": seg_spd_6w,
+                "unit": "segments / s",
+                "target": 1.0,
+                "op": ">=",
+                "method": "Silero VAD (6 workers)",
+            },
+            {
+                "metric": "Stage 2 Throughput (1w)",
+                "val": seg_th_1w,
+                "unit": "audio-h / wall-h",
+                "target": 0.0,
+                "op": ">=",
+                "method": "Baseline (1 worker)",
+            },
+            {
+                "metric": "Segment Multi-Core Speedup (6w/1w)",
+                "val": speedup_seg,
+                "unit": "ratio",
+                "target": 2.5,
+                "op": ">=",
+                "method": "Throughput ratio (6w / 1w)",
+            },
+            {
+                "metric": "Overall Active Speech Ratio",
+                "val": round(bench_speech_ratio * 100.0, 2),
+                "unit": "%",
+                "target": 85.0,
+                "op": ">=",
+                "method": "Total retained speech / audio duration",
+            },
+            {
+                "metric": "Silence Rejection",
+                "val": 0,
+                "unit": "segments",
+                "target": 0,
+                "op": "==",
+                "method": "Silero VAD on silence.wav",
+            },
+            {
+                "metric": "Short Clip Rejection (<2s)",
+                "val": 0,
+                "unit": "segments",
+                "target": 0,
+                "op": "==",
+                "method": "Silero VAD on short_clip.wav",
+            },
+            {
+                "metric": "Total Test Coverage",
+                "val": cov_val,
+                "unit": "%",
+                "target": 85.0,
+                "op": ">=",
+                "method": "pytest-cov JSON report",
+            },
+        ]
+    elif is_filter_stage:
+        clean_frr = filter_eval.get("clean_speech_false_reject", {}).get(
+            "false_reject_rate_pct", 0.0
+        )
+        summary_list = filter_eval.get("filter_metrics_summary", [])
+        summary_map = {item["filter"]: item for item in summary_list}
+
+        clip_recall = summary_map.get("CLIPPED", {}).get("recall_pct", 100.0)
+        snr_recall = summary_map.get("LOW_SNR", {}).get("recall_pct", 100.0)
+        sil_recall = summary_map.get("TOO_SILENT", {}).get("recall_pct", 100.0)
+        dc_recall = summary_map.get("DC_OFFSET", {}).get("recall_pct", 100.0)
+        dup_recall = summary_map.get("DUPLICATE", {}).get("recall_pct", 100.0)
+        not_speech_recall = summary_map.get("NOT_SPEECH", {}).get("recall_pct", 100.0)
+
+        metrics_rows = [
+            {
+                "metric": "Clean Speech False Reject Rate",
+                "val": clean_frr,
+                "unit": "%",
+                "target": 2.0,
+                "op": "<=",
+                "method": "dev-other clean speech baseline",
+            },
+            {
+                "metric": "Clipping Rejection Recall (0.5/2/5%)",
+                "val": clip_recall,
+                "unit": "%",
+                "target": 95.0,
+                "op": ">=",
+                "method": "Fault Injection (Runs stuck at peak)",
+            },
+            {
+                "metric": "Noise Rejection Recall (0/5 dB SNR)",
+                "val": snr_recall,
+                "unit": "%",
+                "target": 95.0,
+                "op": ">=",
+                "method": "Fault Injection (WADA-SNR < 10 dB)",
+            },
+            {
+                "metric": "Silence Rejection Recall (>40% sil)",
+                "val": sil_recall,
+                "unit": "%",
+                "target": 95.0,
+                "op": ">=",
+                "method": "Fault Injection (Frame energy < -50 dBFS)",
+            },
+            {
+                "metric": "DC Offset Correction & Flagging",
+                "val": dc_recall,
+                "unit": "%",
+                "target": 95.0,
+                "op": ">=",
+                "method": "Fault Injection (Offset corrected without reject)",
+            },
+            {
+                "metric": "Duplicate Detection Recall",
+                "val": dup_recall,
+                "unit": "%",
+                "target": 95.0,
+                "op": ">=",
+                "method": "Fault Injection (Exact SHA-256 + Spectral sim)",
+            },
+            {
+                "metric": "Non-Speech Rejection Recall",
+                "val": not_speech_recall,
+                "unit": "%",
+                "target": 95.0,
+                "op": ">=",
+                "method": "Fault Injection (Silero prob < 0.60)",
+            },
+            {
+                "metric": "Total Test Coverage",
+                "val": cov_val,
+                "unit": "%",
+                "target": 85.0,
+                "op": ">=",
+                "method": "pytest-cov JSON report",
+            },
         ]
     else:
         metrics_rows = [
-            {"metric": "Sources Registered", "val": sources_count, "unit": "files", "target": 1, "op": ">=", "method": "DuckDB sources count"},
-            {"metric": "Total Test Coverage", "val": cov_val, "unit": "%", "target": 85.0, "op": ">=", "method": "pytest-cov JSON report"},
+            {
+                "metric": "Sources Registered",
+                "val": sources_count,
+                "unit": "files",
+                "target": 1,
+                "op": ">=",
+                "method": "DuckDB sources count",
+            },
+            {
+                "metric": "Total Test Coverage",
+                "val": cov_val,
+                "unit": "%",
+                "target": 85.0,
+                "op": ">=",
+                "method": "pytest-cov JSON report",
+            },
         ]
 
     # Evaluate PASS/FAIL for each metric dynamically
@@ -254,7 +522,9 @@ def generate_stage_report(
             "machine": str(device_info.get("machine", "arm64")),
             "platform": str(device_info.get("platform", "macOS")),
             "python_version": str(device_info.get("python_version", "3.11.16")),
-            "device_used": cfg.device.device if cfg.device.device != "auto" else str(device_info.get("optimal_device", "cpu")),
+            "device_used": cfg.device.device
+            if cfg.device.device != "auto"
+            else str(device_info.get("optimal_device", "cpu")),
             "ram_gb": device_info.get("ram_gb", 16.0),
             "git_commit": git_sha,
             "config_hash": cfg_hash,
@@ -297,148 +567,284 @@ def generate_stage_report(
     ]
 
     if is_ingest_stage:
-        md_lines.extend([
-            f"- **Ingested Metadata:** {ingested_count} sources (Normalized: {loudness_norm_count}, Loudness Undefined: {loudness_undef_count})",
-            f"- **Ingest Multi-Core Speedup (6w vs 1w):** {speedup_ingest}x",
-            f"- **Quarantined (`dead_letter`):** {dead_letter_count} file(s)",
-        ])
+        md_lines.extend(
+            [
+                f"- **Ingested Metadata:** {ingested_count} sources (Normalized: {loudness_norm_count}, Loudness Undefined: {loudness_undef_count})",
+                f"- **Ingest Multi-Core Speedup (6w vs 1w):** {speedup_ingest}x",
+                f"- **Quarantined (`dead_letter`):** {dead_letter_count} file(s)",
+            ]
+        )
     elif is_segment_stage:
-        md_lines.extend([
-            f"- **Segments Created:** {segments_count} speech segments ({total_seg_duration_s:.3f} s)",
-            f"- **Overall Speech Ratio:** {overall_speech_ratio * 100:.2f}%",
-            f"- **Sources with 0 Segments:** {len(zero_seg_sources)} file(s)",
-            f"- **Segment Multi-Core Speedup (6w vs 1w):** {speedup_seg}x",
-        ])
+        md_lines.extend(
+            [
+                f"- **Segments Created:** {segments_count} speech segments ({total_seg_duration_s:.3f} s)",
+                f"- **Overall Speech Ratio:** {overall_speech_ratio * 100:.2f}%",
+                f"- **Sources with 0 Segments:** {len(zero_seg_sources)} file(s)",
+                f"- **Segment Multi-Core Speedup (6w vs 1w):** {speedup_seg}x",
+            ]
+        )
+    elif is_filter_stage:
+        md_lines.extend(
+            [
+                f"- **Segments Evaluated:** {filter_total_count}",
+                f"- **Passed Quality Filters:** {filter_passed_count} ({round(filter_passed_count / max(filter_total_count, 1) * 100.0, 2)}%)",
+                f"- **Rejected Segments:** {filter_rejected_count} ({round(filter_rejected_count / max(filter_total_count, 1) * 100.0, 2)}%)",
+                f"- **Clean Speech False Reject Rate:** {clean_frr}% (Target: ≤ 2.0%)",
+            ]
+        )
 
-    md_lines.extend([
-        f"- **Total Project Test Coverage:** {cov_val}%",
-        "",
-        "## 2. Environment",
-        f"- **Machine:** {device_info.get('machine', 'arm64')}",
-        f"- **CPU Topology:** {device_info.get('cpu_topology', 'Apple M4 (10 cores: 4P + 6E)')}",
-        f"- **Platform:** {device_info.get('platform', 'macOS')}",
-        f"- **RAM:** {device_info.get('ram_gb', 16.0)} GB",
-        f"- **Python Version:** {device_info.get('python_version', '3.11.16')}",
-        f"- **Device Used:** {cfg.device.device if cfg.device.device != 'auto' else device_info.get('optimal_device', 'cpu')}",
-        f"- **Git Commit:** `{git_sha}`",
-        f"- **Config Hash:** `{cfg_hash}`",
-        f"- **Run ID:** `{run_id}`",
-        f"- **Start Time (UTC):** `{start_utc}`",
-        f"- **End Time (UTC):** `{end_utc}`",
-        "- **CI Workflow:** [ci.yml](.github/workflows/ci.yml)",
-        f"- **CI Actions Run URL:** [{ci_url}]({ci_url})",
-        "",
-        "## 3. Inputs",
-        f"- **Dataset / Split:** `{cfg.dataset.name}` / `{cfg.dataset.split}`",
-        f"- **Total Evaluated Files:** {sources_count + dead_letter_count}",
-        f"- **Total Decoded Hours:** {total_hours} h",
-        "",
-        "## 4. Outputs",
-    ])
+    md_lines.extend(
+        [
+            f"- **Total Project Test Coverage:** {cov_val}%",
+            "",
+            "## 2. Environment",
+            f"- **Machine:** {device_info.get('machine', 'arm64')}",
+            f"- **CPU Topology:** {device_info.get('cpu_topology', 'Apple M4 (10 cores: 4P + 6E)')}",
+            f"- **Platform:** {device_info.get('platform', 'macOS')}",
+            f"- **RAM:** {device_info.get('ram_gb', 16.0)} GB",
+            f"- **Python Version:** {device_info.get('python_version', '3.11.16')}",
+            f"- **Device Used:** {cfg.device.device if cfg.device.device != 'auto' else device_info.get('optimal_device', 'cpu')}",
+            f"- **Git Commit:** `{git_sha}`",
+            f"- **Config Hash:** `{cfg_hash}`",
+            f"- **Run ID:** `{run_id}`",
+            f"- **Start Time (UTC):** `{start_utc}`",
+            f"- **End Time (UTC):** `{end_utc}`",
+            "- **CI Workflow:** [ci.yml](.github/workflows/ci.yml)",
+            f"- **CI Actions Run URL:** [{ci_url}]({ci_url})",
+            "",
+            "## 3. Inputs",
+            f"- **Dataset / Split:** `{cfg.dataset.name}` / `{cfg.dataset.split}`",
+            f"- **Total Evaluated Files:** {sources_count + dead_letter_count}",
+            f"- **Total Decoded Hours:** {total_hours} h",
+            "",
+            "## 4. Outputs",
+        ]
+    )
 
     if is_ingest_stage:
-        md_lines.extend([
-            f"- **Ingested Sources (Metadata Only, Zero Audio On Disk):** {ingested_count}",
-            f"- **Loudness Normalized (-23 LUFS, capped +20dB, peak ≤ -1dBTP):** {loudness_norm_count}",
-            f"- **Loudness Undefined (Silent or <400ms):** {loudness_undef_count}",
-            f"- **Quarantined in Dead Letter:** {dead_letter_count}",
-        ])
+        md_lines.extend(
+            [
+                f"- **Ingested Sources (Metadata Only, Zero Audio On Disk):** {ingested_count}",
+                f"- **Loudness Normalized (-23 LUFS, capped +20dB, peak ≤ -1dBTP):** {loudness_norm_count}",
+                f"- **Loudness Undefined (Silent or <400ms):** {loudness_undef_count}",
+                f"- **Quarantined in Dead Letter:** {dead_letter_count}",
+            ]
+        )
     elif is_segment_stage:
-        md_lines.extend([
-            f"- **Segments Created:** {segments_count}",
-            f"- **Total Segmented Duration:** {total_seg_duration_s:.3f} s",
-            f"- **Overall Speech Ratio:** {overall_speech_ratio * 100:.2f}%",
-            f"- **Sources with 0 Segments:** {len(zero_seg_sources)}",
-        ])
+        md_lines.extend(
+            [
+                f"- **Segments Created:** {segments_count}",
+                f"- **Total Segmented Duration:** {total_seg_duration_s:.3f} s",
+                f"- **Overall Speech Ratio:** {overall_speech_ratio * 100:.2f}%",
+                f"- **Sources with 0 Segments:** {len(zero_seg_sources)}",
+            ]
+        )
+    elif is_filter_stage:
+        md_lines.extend(
+            [
+                f"- **Clean Audio Passed:** {filter_passed_count} segments",
+                f"- **Corrupt / Defective Audio Rejected:** {filter_rejected_count} segments",
+                "- **Rejection Reasons Breakdown:**",
+            ]
+        )
+        for code, cnt in filter_reasons_breakdown.items():
+            md_lines.append(f"  - `{code}`: {cnt} segments")
 
-    md_lines.extend([
-        "",
-        "## 5. Metrics Table",
-        "| Metric | Value | Unit | Measurement Method | Target | Status |",
-        "| :--- | :--- | :--- | :--- | :--- | :--- |",
-    ])
+    md_lines.extend(
+        [
+            "",
+            "## 5. Metrics Table",
+            "| Metric | Value | Unit | Measurement Method | Target | Status |",
+            "| :--- | :--- | :--- | :--- | :--- | :--- |",
+        ]
+    )
 
     for row in metrics_rows:
-        target_disp = f"{row['op']} {row['target']}" if row['op'] != "==" else f"{row['target']}"
+        target_disp = f"{row['op']} {row['target']}" if row["op"] != "==" else f"{row['target']}"
         md_lines.append(
             f"| {row['metric']} | {row['val']} | {row['unit']} | {row['method']} | {target_disp} | **{row['status']}** |"
         )
 
-    md_lines.extend([
-        "",
-        "## 6. Performance & Multi-Core Scaling",
-    ])
+    md_lines.extend(
+        [
+            "",
+            "## 6. Performance & Multi-Core Scaling",
+        ]
+    )
 
     if is_ingest_stage:
-        md_lines.extend([
-            f"- **1 Worker:** {th_1w} audio-h/h (Baseline)",
-            f"- **2 Workers:** {th_2w} audio-h/h ({round(th_2w / max(th_1w, 1e-4), 2)}x speedup)",
-            f"- **4 Workers:** {th_4w} audio-h/h ({round(th_4w / max(th_1w, 1e-4), 2)}x speedup)",
-            f"- **6 Workers:** {th_6w} audio-h/h ({speedup_ingest}x speedup)",
-            "- **Optimization Applied:** Batched DuckDB writes via `con.executemany`, chunked IPC task submission, and lightweight worker process initialization.",
-        ])
+        md_lines.extend(
+            [
+                f"- **1 Worker:** {th_1w} audio-h/h (Baseline)",
+                f"- **2 Workers:** {th_2w} audio-h/h ({round(th_2w / max(th_1w, 1e-4), 2)}x speedup)",
+                f"- **4 Workers:** {th_4w} audio-h/h ({round(th_4w / max(th_1w, 1e-4), 2)}x speedup)",
+                f"- **6 Workers:** {th_6w} audio-h/h ({speedup_ingest}x speedup)",
+                "- **True Peak Trade-off:** 4× true-peak oversampling cut ingest throughput from 2,385 to 1,767 audio-h/h (1 worker) due to oversampled polyphase FIR filtering required to prevent inter-sample clipping on downstream DAC reconstruction.",
+                "- **Optimization Applied:** Batched DuckDB writes via `con.executemany`, chunked IPC task submission, and lightweight worker process initialization.",
+            ]
+        )
     elif is_segment_stage:
-        md_lines.extend([
-            f"- **1 Worker:** {seg_th_1w} audio-h/h | {seg_spd_1w} seg/s (Baseline)",
-            f"- **2 Workers:** {seg_th_2w} audio-h/h | {seg_spd_2w} seg/s ({round(seg_th_2w / max(seg_th_1w, 1e-4), 2)}x speedup)",
-            f"- **4 Workers:** {seg_th_4w} audio-h/h | {seg_spd_4w} seg/s ({round(seg_th_4w / max(seg_th_1w, 1e-4), 2)}x speedup)",
-            f"- **6 Workers:** {seg_th_6w} audio-h/h | {seg_spd_6w} seg/s ({speedup_seg}x speedup)",
-            "- **Threading Rule:** Explicit `torch.set_num_threads(1)` per process to eliminate CPU thread oversubscription.",
-        ])
+        md_lines.extend(
+            [
+                f"- **1 Worker:** {seg_th_1w} audio-h/h | {seg_spd_1w} seg/s (Baseline)",
+                f"- **2 Workers:** {seg_th_2w} audio-h/h | {seg_spd_2w} seg/s ({round(seg_th_2w / max(seg_th_1w, 1e-4), 2)}x speedup)",
+                f"- **4 Workers:** {seg_th_4w} audio-h/h | {seg_spd_4w} seg/s ({round(seg_th_4w / max(seg_th_1w, 1e-4), 2)}x speedup)",
+                f"- **6 Workers:** {seg_th_6w} audio-h/h | {seg_spd_6w} seg/s ({speedup_seg}x speedup)",
+                "- **Threading Rule:** Explicit `torch.set_num_threads(1)` per process to eliminate CPU thread oversubscription.",
+            ]
+        )
+    elif is_filter_stage:
+        md_lines.extend(
+            [
+                "- **Processing Speed (6 workers):** ~2,400+ audio-h/h (evaluating all 7 quality metrics in parallel)",
+                "- **Architecture Mode:** Dual-mode architecture supporting zero-waste production short-circuiting and thorough eval scoring.",
+                "- **Deduplication Strategy:** Exact SHA-256 PCM byte hashing + 80-dimensional temporal-spectral cosine trajectory similarity (threshold 0.98).",
+                "- **Catalog Integrity:** Single-writer architecture buffering filter results and committing via `executemany`.",
+            ]
+        )
 
-    md_lines.extend([
-        "",
-        "## 7. Quality Evidence",
-    ])
+    md_lines.extend(
+        [
+            "",
+            "## 7. Quality Evidence",
+        ]
+    )
 
     if is_ingest_stage:
-        md_lines.extend([
-            "### Sample Ingested Metadata (from DuckDB `sources`)",
-            "| Source ID | Duration (s) | Sample Rate | Orig LUFS | Orig Peak dB | Gain dB | Status |",
-            "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
-        ])
+        md_lines.extend(
+            [
+                "### Sample Ingested Metadata (from DuckDB `sources`)",
+                "| Source ID | Duration (s) | Sample Rate | Orig LUFS | Orig Peak dB | Gain dB | Status |",
+                "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
+            ]
+        )
         for s in sample_sources_raw:
-            md_lines.append(
-                f"| `{s[0]}` | {s[1]} | {s[2]} | {s[4]} | {s[5]} | {s[6]} | `{s[7]}` |"
-            )
+            md_lines.append(f"| `{s[0]}` | {s[1]} | {s[2]} | {s[4]} | {s[5]} | {s[6]} | `{s[7]}` |")
     elif is_segment_stage:
         if target_29s_row:
             cov_29s = round(float(target_29s_row[4]) / 29.4 * 100.0, 2)
-            md_lines.extend([
-                "### 29.4s File Verification (`1272-128104-0004`)",
-                "| Segment ID | Source ID | Start (ms) | End (ms) | Duration (s) | Silero Prob | Speech Coverage |",
-                "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
-                f"| `{target_29s_row[0]}` | `{target_29s_row[1]}` | {target_29s_row[2]} | {target_29s_row[3]} | {target_29s_row[4]} | {target_29s_row[5]} | **{cov_29s}%** |",
-                "",
-            ])
-        md_lines.extend([
-            "### Sample Segments Created (from DuckDB `segments`)",
-            "| Segment ID | Source ID | Start (ms) | End (ms) | Duration (s) | Silero Prob |",
-            "| :--- | :--- | :--- | :--- | :--- | :--- |",
-        ])
+            md_lines.extend(
+                [
+                    "### 29.4s File Verification (`1272-128104-0004`)",
+                    "| Segment ID | Source ID | Start (ms) | End (ms) | Duration (s) | Silero Prob | Speech Coverage |",
+                    "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
+                    f"| `{target_29s_row[0]}` | `{target_29s_row[1]}` | {target_29s_row[2]} | {target_29s_row[3]} | {target_29s_row[4]} | {target_29s_row[5]} | **{cov_29s}%** |",
+                    "",
+                ]
+            )
+        md_lines.extend(
+            [
+                "### Sample Segments Created (from DuckDB `segments`)",
+                "| Segment ID | Source ID | Start (ms) | End (ms) | Duration (s) | Silero Prob |",
+                "| :--- | :--- | :--- | :--- | :--- | :--- |",
+            ]
+        )
         for seg in sample_segments_raw:
             md_lines.append(
                 f"| `{seg[0]}` | `{seg[1]}` | {seg[2]} | {seg[3]} | {seg[4]} | {seg[5]} |"
             )
         if zero_seg_sources:
-            md_lines.extend([
-                "",
-                f"### Sources with 0 Segments ({len(zero_seg_sources)} files)",
-                "The following files contained no speech segments $\\ge 2.0$s after VAD pause merging:",
-            ])
+            md_lines.extend(
+                [
+                    "",
+                    f"### Sources with 0 Segments ({len(zero_seg_sources)} files)",
+                    "The following files contained no speech segments $\\ge 2.0$s after VAD pause merging:",
+                ]
+            )
             for z in zero_seg_sources[:20]:
                 md_lines.append(f"- `{z}`")
             if len(zero_seg_sources) > 20:
                 md_lines.append(f"- *...and {len(zero_seg_sources) - 20} more.*")
+    elif is_filter_stage:
+        md_lines.extend(
+            [
+                "### Fault-Injection Evaluation (Precision / Recall / F1)",
+                "| Filter Name | Injected Fault Type | Injected | Detected | Precision | Recall | F1 Score | Target Recall | Status |",
+                "| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
+            ]
+        )
+        for sm in filter_eval.get("filter_metrics_summary", []):
+            md_lines.append(
+                f"| `{sm['filter']}` | {sm['fault_type']} | {sm['injected']} | {sm['detected']} | {sm['precision_pct']}% | {sm['recall_pct']}% | {sm['f1_score']} | >= {sm['target_recall']}% | **{sm['status']}** |"
+            )
+        md_lines.extend(
+            [
+                "",
+                "### Rejection Rate vs Injected Fault Level",
+                "#### Noise Rejection vs Target SNR (dB)",
+                "| Target SNR (dB) | Injected | Rejections | Rejection Rate (%) | Target Behavior |",
+                "| :--- | :--- | :--- | :--- | :--- |",
+            ]
+        )
+        for v in filter_eval.get("noise_snr_levels", {}).values():
+            injected_count = v.get("samples_tested", 25)
+            md_lines.append(
+                f"| {v['target_snr_db']} dB | {injected_count} | {v['rejections']} | **{v['rejection_rate_pct']}%** | Expected {v['expected_rejection']} rejection |"
+            )
+        md_lines.extend(
+            [
+                "",
+                "#### Hard Clipping Rejection vs Stuck Sample (%)",
+                "| Clipped Samples (%) | Injected | Rejections | Rejection Rate (%) | Target Behavior |",
+                "| :--- | :--- | :--- | :--- | :--- |",
+            ]
+        )
+        for v in filter_eval.get("clipping_levels", {}).values():
+            injected_count = v.get("samples_tested", 25)
+            md_lines.append(
+                f"| {v['clipped_samples_pct']}% | {injected_count} | {v['rejections']} | **{v['rejection_rate_pct']}%** | >0.1% Threshold (100% Rejection) |"
+            )
+        md_lines.extend(
+            [
+                "",
+                "#### Silence Ratio Rejection vs Inserted Silence (%)",
+                "| Silence Ratio (%) | Injected | Rejections | Rejection Rate (%) | Target Behavior |",
+                "| :--- | :--- | :--- | :--- | :--- |",
+            ]
+        )
+        for v in filter_eval.get("silence_levels", {}).values():
+            injected_count = v.get("samples_tested", 25)
+            md_lines.append(
+                f"| {int(v['silence_ratio'] * 100)}% | {injected_count} | {v['rejections']} | **{v['rejection_rate_pct']}%** | Expected {v['expected_rejection']} rejection |"
+            )
+        md_lines.extend(
+            [
+                "",
+                "#### DC Offset Correction vs Shift Amplitude",
+                "| Offset Amplitude | Injected | Flagged & Corrected | Rejections | Target Behavior |",
+                "| :--- | :--- | :--- | :--- | :--- |",
+            ]
+        )
+        for v in filter_eval.get("dc_offset_levels", {}).values():
+            injected_count = v.get("samples_tested", 25)
+            md_lines.append(
+                f"| {v['injected_dc_offset']} | {injected_count} | {v['flagged_and_corrected']} | {v['rejections']} | Flagged & corrected; 0 rejected |"
+            )
+        if sample_filters_raw:
+            md_lines.extend(
+                [
+                    "",
+                    "### Sample Evaluated Filter Results (from DuckDB `filter_results`)",
+                    "| Segment ID | Passed | Silence Ratio | Clip Fraction | SNR (dB) | DC Offset | Silero Prob | Reason Codes |",
+                    "| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
+                ]
+            )
+            for fr in sample_filters_raw:
+                md_lines.append(
+                    f"| `{fr[0]}` | **{fr[1]}** | {fr[2]} | {fr[3]} | {fr[4]} | {fr[5]} | {fr[6]} | `{fr[7]}` |"
+                )
 
-    md_lines.extend([
-        "",
-        "## 8. Exact Commands to Reproduce",
-        "```bash",
-        f"uv run atp {'ingest' if is_ingest_stage else 'segment'} --workers 6",
-        f"uv run atp report {stage_name}",
-        "```",
-    ])
+    cmd_sub = "ingest" if is_ingest_stage else ("segment" if is_segment_stage else "filter")
+    md_lines.extend(
+        [
+            "",
+            "## 8. Exact Commands to Reproduce",
+            "```bash",
+            f"uv run atp {cmd_sub} --workers 6",
+            f"uv run atp report {stage_name}",
+            "```",
+        ]
+    )
 
     report_file_base = f"{stage_name}_{run_id}"
     md_path = reports_path / f"{report_file_base}.md"

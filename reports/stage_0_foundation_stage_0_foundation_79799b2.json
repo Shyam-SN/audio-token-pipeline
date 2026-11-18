@@ -1,19 +1,19 @@
 {
-  "stage": "stage_1_ingest",
-  "run_id": "ingest_1795032813",
-  "status": "FAIL",
+  "stage": "stage_0_foundation",
+  "run_id": "stage_0_foundation_79799b2",
+  "status": "PASS",
   "environment": {
     "machine": "arm64",
     "platform": "macOS-15.4.1-arm64-arm-64bit",
     "python_version": "3.11.16",
     "device_used": "cpu",
     "ram_gb": 16.0,
-    "git_commit": "f36ae1a909344b9b0dc80e238c80e5905b979dfe",
-    "config_hash": "90d1fc24d6bd94fc",
+    "git_commit": "79799b2fc393a73c2a97edcf3b091fd5a0b4a3ba",
+    "config_hash": "29265ee9e189fa8c",
     "ci_workflow": ".github/workflows/ci.yml",
-    "ci_run_url": "https://github.com/Shyam-SN/audio-token-pipeline/actions/workflows/ci.yml",
-    "start_time_utc": "2026-11-19T01:43:33Z",
-    "end_time_utc": "2026-11-19T01:43:33Z"
+    "ci_run_url": "https://github.com/Shyam-SN/audio-token-pipeline/actions/runs/44393660532",
+    "start_time_utc": "2026-11-18T21:12:26Z",
+    "end_time_utc": "2026-11-18T21:12:26Z"
   },
   "inputs": {
     "dataset": "smoke_test",
@@ -57,84 +57,21 @@
         "created_at": "2026-11-19T00:58:13.702407"
       }
     ],
-    "total_coverage_pct": 86.34
+    "total_coverage_pct": 87.28
   },
   "metrics": [
     {
-      "metric": "Stage 1 Ingest Throughput (6w)",
-      "val": 4556.78,
-      "unit": "audio-h / wall-h",
-      "target": 100.0,
-      "op": ">=",
-      "method": "ProcessPoolExecutor (6 workers)",
-      "status": "PASS"
-    },
-    {
-      "metric": "Stage 1 Ingest Throughput (4w)",
-      "val": 4845.87,
-      "unit": "audio-h / wall-h",
-      "target": 80.0,
-      "op": ">=",
-      "method": "ProcessPoolExecutor (4 workers)",
-      "status": "PASS"
-    },
-    {
-      "metric": "Stage 1 Ingest Throughput (2w)",
-      "val": 3621.7,
-      "unit": "audio-h / wall-h",
-      "target": 50.0,
-      "op": ">=",
-      "method": "ProcessPoolExecutor (2 workers)",
-      "status": "PASS"
-    },
-    {
-      "metric": "Stage 1 Ingest Throughput (1w)",
-      "val": 2385.21,
-      "unit": "audio-h / wall-h",
-      "target": 0.0,
-      "op": ">=",
-      "method": "Baseline (1 worker)",
-      "status": "PASS"
-    },
-    {
-      "metric": "Ingest Multi-Core Speedup (6w/1w)",
-      "val": 1.91,
-      "unit": "ratio",
-      "target": 3.0,
-      "op": ">=",
-      "method": "Throughput ratio (6w / 1w)",
-      "status": "FAIL"
-    },
-    {
-      "metric": "Loudness Normalized Sources",
-      "val": 16,
-      "unit": "sources",
-      "target": 18,
-      "op": "==",
-      "method": "DuckDB sources query",
-      "status": "FAIL"
-    },
-    {
-      "metric": "Loudness Undefined Sources",
-      "val": 2,
-      "unit": "sources",
-      "target": 0,
-      "op": "==",
-      "method": "DuckDB sources query",
-      "status": "FAIL"
-    },
-    {
-      "metric": "Ingest Quarantined (Dead Letter)",
-      "val": 1,
+      "metric": "Sources Registered",
+      "val": 18,
       "unit": "files",
-      "target": 0,
-      "op": "==",
-      "method": "DuckDB dead_letter query",
-      "status": "FAIL"
+      "target": 1,
+      "op": ">=",
+      "method": "DuckDB sources count",
+      "status": "PASS"
     },
     {
       "metric": "Total Test Coverage",
-      "val": 86.34,
+      "val": 87.28,
       "unit": "%",
       "target": 85.0,
       "op": ">=",

@@ -19,10 +19,10 @@ def generate_fixtures() -> dict[str, Path]:
     # 1. Clean speech-like harmonic formants (40 seconds, 24kHz mono)
     t = np.linspace(0, 40, int(sr_default * 40), endpoint=False, dtype=np.float32)
     clean_audio = (
-        0.3 * np.sin(2 * np.pi * 150 * t) +
-        0.2 * np.sin(2 * np.pi * 300 * t) +
-        0.15 * np.sin(2 * np.pi * 750 * t) +
-        0.1 * np.sin(2 * np.pi * 1200 * t)
+        0.3 * np.sin(2 * np.pi * 150 * t)
+        + 0.2 * np.sin(2 * np.pi * 300 * t)
+        + 0.15 * np.sin(2 * np.pi * 750 * t)
+        + 0.1 * np.sin(2 * np.pi * 1200 * t)
     ).astype(np.float32)
     envelope = (np.sin(2 * np.pi * 3 * t) + 1.0) / 2.0
     clean_audio = clean_audio * envelope
@@ -63,16 +63,21 @@ def generate_fixtures() -> dict[str, Path]:
     # 6. Polyphonic music simulation (multi-chord) (30 seconds, 24kHz mono)
     t = np.linspace(0, 30, int(sr_default * 30), endpoint=False, dtype=np.float32)
     music = (
-        0.2 * np.sin(2 * np.pi * 261.63 * t) +
-        0.2 * np.sin(2 * np.pi * 329.63 * t) +
-        0.2 * np.sin(2 * np.pi * 392.00 * t)
+        0.2 * np.sin(2 * np.pi * 261.63 * t)
+        + 0.2 * np.sin(2 * np.pi * 329.63 * t)
+        + 0.2 * np.sin(2 * np.pi * 392.00 * t)
     ).astype(np.float32)
     path_music = FIXTURES_DIR / "music_chord.wav"
     sf.write(str(path_music), music, sr_default)
     created_files["music"] = path_music
 
     # 7. Short duration clip (< 400ms, 0.3s)
-    short_audio = np.sin(2 * np.pi * 440 * np.linspace(0, 0.3, int(sr_default * 0.3), endpoint=False, dtype=np.float32))
+    short_audio = np.sin(
+        2
+        * np.pi
+        * 440
+        * np.linspace(0, 0.3, int(sr_default * 0.3), endpoint=False, dtype=np.float32)
+    )
     path_short = FIXTURES_DIR / "short_clip.wav"
     sf.write(str(path_short), short_audio, sr_default)
     created_files["short"] = path_short
@@ -80,9 +85,9 @@ def generate_fixtures() -> dict[str, Path]:
     # 8. Extended mock conversational speech (100 seconds, 24kHz mono)
     t = np.linspace(0, 100, int(sr_default * 100), endpoint=False, dtype=np.float32)
     speech_mock = (
-        0.25 * np.sin(2 * np.pi * 180 * t) +
-        0.15 * np.sin(2 * np.pi * 360 * t) +
-        0.10 * np.sin(2 * np.pi * 900 * t)
+        0.25 * np.sin(2 * np.pi * 180 * t)
+        + 0.15 * np.sin(2 * np.pi * 360 * t)
+        + 0.10 * np.sin(2 * np.pi * 900 * t)
     ).astype(np.float32)
     pause_mask = (np.sin(2 * np.pi * 0.2 * t) > -0.2).astype(np.float32)
     speech_mock = speech_mock * pause_mask
@@ -162,4 +167,6 @@ if __name__ == "__main__":
             valid_dur += sf.info(str(p)).duration
         except Exception:
             pass
-    print(f"Generated {len(files)} test fixtures, total valid duration: {valid_dur:.1f}s (~{valid_dur / 60:.2f} mins)")
+    print(
+        f"Generated {len(files)} test fixtures, total valid duration: {valid_dur:.1f}s (~{valid_dur / 60:.2f} mins)"
+    )

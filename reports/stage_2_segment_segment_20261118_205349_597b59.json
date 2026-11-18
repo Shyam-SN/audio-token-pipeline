@@ -1,0 +1,150 @@
+{
+  "stage": "stage_2_segment",
+  "run_id": "segment_20261118_205349_597b59",
+  "status": "PASS",
+  "environment": {
+    "machine": "arm64",
+    "platform": "macOS-15.4.1-arm64-arm-64bit",
+    "python_version": "3.11.16",
+    "device_used": "cpu",
+    "ram_gb": 16.0,
+    "git_commit": "79799b2fc393a73c2a97edcf3b091fd5a0b4a3ba",
+    "config_hash": "a848122e7927d37e",
+    "ci_workflow": ".github/workflows/ci.yml",
+    "ci_run_url": "https://github.com/Shyam-SN/audio-token-pipeline/actions/runs/44393660532",
+    "start_time_utc": "2026-11-19T02:23:49Z",
+    "end_time_utc": "2026-11-19T02:24:07Z"
+  },
+  "inputs": {
+    "dataset": "librispeech",
+    "split": "dev-clean",
+    "files_evaluated": 2703,
+    "total_decoded_duration_s": 19396.121,
+    "total_decoded_hours": 5.3878
+  },
+  "outputs": {
+    "sources_registered": 2703,
+    "sources_ingested": 2703,
+    "loudness_normalized": 2703,
+    "loudness_undefined": 0,
+    "segments_created": 2679,
+    "zero_segment_sources_count": 37,
+    "zero_segment_sources": [
+      "librispeech_dev-clean_1272-135031-0009_d23fc0e9 (1.91s)",
+      "librispeech_dev-clean_1272-135031-0014_659d4e11 (1.74s)",
+      "librispeech_dev-clean_1272-141231-0013_ff87e7b4 (1.64s)",
+      "librispeech_dev-clean_1272-141231-0016_2de6e800 (1.85s)",
+      "librispeech_dev-clean_174-50561-0014_2ecc03fb (1.80s)",
+      "librispeech_dev-clean_1919-142785-0021_939c9884 (1.69s)",
+      "librispeech_dev-clean_1919-142785-0048_3ba33cd0 (1.84s)",
+      "librispeech_dev-clean_1988-24833-0006_3de779f6 (1.98s)",
+      "librispeech_dev-clean_2035-147960-0015_c9e80b5c (1.56s)",
+      "librispeech_dev-clean_2035-147961-0033_07d67e4e (1.95s)",
+      "librispeech_dev-clean_2078-142845-0023_591f2d39 (1.75s)",
+      "librispeech_dev-clean_2277-149896-0004_ed54e3c1 (1.96s)",
+      "librispeech_dev-clean_2412-153947-0012_beb040bc (1.98s)",
+      "librispeech_dev-clean_2428-83699-0004_660b675c (1.88s)",
+      "librispeech_dev-clean_2428-83699-0009_d52c7a39 (1.85s)",
+      "librispeech_dev-clean_2428-83699-0022_b9a64c72 (1.98s)",
+      "librispeech_dev-clean_2428-83699-0039_1af6fd1e (1.98s)",
+      "librispeech_dev-clean_2428-83705-0036_b89243a2 (1.96s)",
+      "librispeech_dev-clean_251-136532-0022_05dd269b (1.53s)",
+      "librispeech_dev-clean_3081-166546-0008_9100b854 (1.77s)",
+      "librispeech_dev-clean_3081-166546-0018_884aea69 (1.77s)",
+      "librispeech_dev-clean_3081-166546-0063_14ccb347 (1.74s)",
+      "librispeech_dev-clean_3081-166546-0073_0a5edd09 (1.45s)",
+      "librispeech_dev-clean_3081-166546-0076_0bab853f (1.94s)",
+      "librispeech_dev-clean_3752-4944-0008_43a95aa0 (1.94s)",
+      "librispeech_dev-clean_3752-4944-0046_0bf734d8 (1.86s)",
+      "librispeech_dev-clean_5338-284437-0014_0622ec8b (1.84s)",
+      "librispeech_dev-clean_5338-284437-0025_e5856f7b (1.94s)",
+      "librispeech_dev-clean_5694-64025-0000_bd57c068 (1.67s)",
+      "librispeech_dev-clean_5694-64038-0008_82435324 (1.95s)",
+      "librispeech_dev-clean_6313-66129-0032_ab8194c8 (1.86s)",
+      "librispeech_dev-clean_6345-93302-0028_743d7134 (1.94s)",
+      "librispeech_dev-clean_777-126732-0026_0595f0d5 (1.97s)",
+      "librispeech_dev-clean_777-126732-0081_80e22d9e (1.50s)",
+      "librispeech_dev-clean_7976-105575-0017_3d5b039c (1.94s)",
+      "librispeech_dev-clean_8297-275155-0021_eaebc5ff (1.77s)",
+      "librispeech_dev-clean_8842-304647-0007_560a3e0b (1.73s)"
+    ],
+    "overall_speech_ratio": 0.9471,
+    "dead_letter_quarantined": 0,
+    "dead_letter_details": [],
+    "total_coverage_pct": 87.27
+  },
+  "metrics": [
+    {
+      "metric": "Stage 2 Throughput (6w)",
+      "val": 1052.77,
+      "unit": "audio-h / wall-h",
+      "target": 100.0,
+      "op": ">=",
+      "method": "Silero VAD (6 workers)",
+      "status": "PASS"
+    },
+    {
+      "metric": "Stage 2 Processing Speed (6w)",
+      "val": 145.41,
+      "unit": "segments / s",
+      "target": 1.0,
+      "op": ">=",
+      "method": "Silero VAD (6 workers)",
+      "status": "PASS"
+    },
+    {
+      "metric": "Stage 2 Throughput (1w)",
+      "val": 371.17,
+      "unit": "audio-h / wall-h",
+      "target": 0.0,
+      "op": ">=",
+      "method": "Baseline (1 worker)",
+      "status": "PASS"
+    },
+    {
+      "metric": "Segment Multi-Core Speedup (6w/1w)",
+      "val": 2.84,
+      "unit": "ratio",
+      "target": 2.5,
+      "op": ">=",
+      "method": "Throughput ratio (6w / 1w)",
+      "status": "PASS"
+    },
+    {
+      "metric": "Overall Active Speech Ratio",
+      "val": 92.38,
+      "unit": "%",
+      "target": 85.0,
+      "op": ">=",
+      "method": "Total retained speech / audio duration",
+      "status": "PASS"
+    },
+    {
+      "metric": "Silence Rejection",
+      "val": 0,
+      "unit": "segments",
+      "target": 0,
+      "op": "==",
+      "method": "Silero VAD on silence.wav",
+      "status": "PASS"
+    },
+    {
+      "metric": "Short Clip Rejection (<2s)",
+      "val": 0,
+      "unit": "segments",
+      "target": 0,
+      "op": "==",
+      "method": "Silero VAD on short_clip.wav",
+      "status": "PASS"
+    },
+    {
+      "metric": "Total Test Coverage",
+      "val": 87.27,
+      "unit": "%",
+      "target": 85.0,
+      "op": ">=",
+      "method": "pytest-cov JSON report",
+      "status": "PASS"
+    }
+  ]
+}

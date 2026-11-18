@@ -79,7 +79,9 @@ def test_run_audit_lifecycle(tmp_path: Path) -> None:
     cat.finish_run(run_id=run_id, status="SUCCESS", items_in=10, items_out=9)
 
     with cat.connection() as con:
-        row = con.execute("SELECT status, items_in, items_out FROM runs WHERE run_id = ?", [run_id]).fetchone()
+        row = con.execute(
+            "SELECT status, items_in, items_out FROM runs WHERE run_id = ?", [run_id]
+        ).fetchone()
         assert row is not None
         assert row[0] == "SUCCESS"
         assert row[1] == 10
