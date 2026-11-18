@@ -31,12 +31,22 @@ def get_vad_model():  # type: ignore[no-untyped-def]
     global _VAD_MODEL, _VAD_UTILS
     if _VAD_MODEL is None:
         torch.set_num_threads(1)
-        _VAD_MODEL, _VAD_UTILS = torch.hub.load(
-            repo_or_dir="snakers4/silero-vad",
-            model="silero_vad",
-            onnx=True,
-            trust_repo=True,
-        )
+        hub_dir = Path.home() / ".cache/torch/hub/snakers4_silero-vad_master"
+        if hub_dir.exists():
+            _VAD_MODEL, _VAD_UTILS = torch.hub.load(
+                repo_or_dir=str(hub_dir),
+                model="silero_vad",
+                source="local",
+                onnx=True,
+                trust_repo=True,
+            )
+        else:
+            _VAD_MODEL, _VAD_UTILS = torch.hub.load(
+                repo_or_dir="snakers4/silero-vad",
+                model="silero_vad",
+                onnx=True,
+                trust_repo=True,
+            )
     return _VAD_MODEL, _VAD_UTILS
 
 
@@ -114,17 +124,30 @@ def segment_audio_file(
 
     # Silero VAD inference
     model, utils = get_vad_model()
-    get_speech_timestamps = utils[0]
+    import inspect
+    mod = inspect.getmodule(utils[0])
+    get_speech_timestamps_from_probs = getattr(mod, "get_speech_timestamps_from_probs")
 
-    tensor_16k = torch.from_numpy(audio_16k)
-    raw_timestamps = get_speech_timestamps(
-        tensor_16k,
-        model,
-        threshold=vad_threshold,
+    window = 512
+    model.reset_states()
+    audio_t = torch.from_numpy(audio_16k).float()
+    audio_len = len(audio_16k)
+
+    probs: list[float] = []
+    for cur in range(0, audio_len, window):
+        chunk = audio_t[cur : cur + window]
+        if len(chunk) < window:
+            chunk = torch.nn.functional.pad(chunk, (0, int(window - len(chunk))))
+        probs.append(model(chunk, 16000).item())
+
+    raw_timestamps = get_speech_timestamps_from_probs(
+        probs,
         sampling_rate=16000,
+        threshold=vad_threshold,
         min_speech_duration_ms=250,
         min_silence_duration_ms=100,
-        return_seconds=False,
+        speech_pad_ms=int(speech_pad_s * 1000),
+        audio_length_samples=audio_len,
     )
 
     if not raw_timestamps:
@@ -135,36 +158,22 @@ def segment_audio_file(
             total_audio_s=round(total_audio_s, 4),
         )
 
-    # Compute total detected speech duration for speech_ratio
-    total_speech_samples = sum(ts["end"] - ts["start"] for ts in raw_timestamps)
-    speech_ratio = min(1.0, float(total_speech_samples) / float(len(audio_16k))) if len(audio_16k) > 0 else 0.0
-
-    # Merge and pad speech regions into segments of 2.0 to 30.0 seconds
-    pad_samples = int(speech_pad_s * 16000)
+    # Merge across short pauses (gap <= 1.2s) as long as combined duration <= 30.0s
+    max_pause_samples = int(1.2 * 16000)
     max_samples = int(max_speech_duration_s * 16000)
     min_samples = int(min_speech_duration_s * 16000)
-    total_len = len(audio_16k)
 
-    # Apply padding to raw intervals
-    padded_intervals = []
-    for ts in raw_timestamps:
-        st = max(0, ts["start"] - pad_samples)
-        en = min(total_len, ts["end"] + pad_samples)
-        padded_intervals.append({"start": st, "end": en})
-
-    # Merge overlapping or close intervals
     merged_regions: list[dict[str, int]] = []
-    curr = padded_intervals[0].copy()
+    curr = {"start": raw_timestamps[0]["start"], "end": raw_timestamps[0]["end"]}
 
-    for nxt in padded_intervals[1:]:
-        # If overlapping or gap < 300ms and combined duration <= 30s
+    for nxt in raw_timestamps[1:]:
         gap = nxt["start"] - curr["end"]
         combined_dur = nxt["end"] - curr["start"]
-        if gap <= 4800 and combined_dur <= max_samples:  # 4800 samples = 300ms
+        if gap <= max_pause_samples and combined_dur <= max_samples:
             curr["end"] = max(curr["end"], nxt["end"])
         else:
             merged_regions.append(curr)
-            curr = nxt.copy()
+            curr = {"start": nxt["start"], "end": nxt["end"]}
     merged_regions.append(curr)
 
     # Split any regions exceeding max_speech_duration_s (30s) at lowest-energy point
@@ -181,12 +190,17 @@ def segment_audio_file(
             st = split_point
         final_regions.append({"start": st, "end": en})
 
-    # Filter out segments shorter than min_speech_duration_s (2.0s)
+    # Drop only pieces under 2s (min_speech_duration_s)
     segments = []
     seg_idx = 0
     for reg in final_regions:
         dur_samples = reg["end"] - reg["start"]
         if dur_samples >= min_samples:
+            st_idx = reg["start"] // 512
+            en_idx = max(st_idx + 1, (reg["end"] + 511) // 512)
+            seg_probs = probs[st_idx:en_idx]
+            mean_prob = float(np.mean(seg_probs)) if seg_probs else 0.0
+
             start_ms = int(round((reg["start"] / 16000.0) * 1000.0))
             end_ms = int(round((reg["end"] / 16000.0) * 1000.0))
             dur_s = round((end_ms - start_ms) / 1000.0, 4)
@@ -196,15 +210,15 @@ def segment_audio_file(
                 "start_ms": start_ms,
                 "end_ms": end_ms,
                 "duration_s": dur_s,
-                "speech_prob": 1.0,
+                "speech_prob": round(mean_prob, 4),
             })
             seg_idx += 1
 
     # Compute final active speech ratio from retained speech segments
     seg_speech_sec = 0.0
     for s in segments:
-        dur_val = s.get("duration_s", 0.0)
-        seg_speech_sec += float(dur_val) if isinstance(dur_val, (int, float)) else 0.0
+        dur_v = s.get("duration_s", 0.0)
+        seg_speech_sec += float(dur_v) if isinstance(dur_v, (int, float)) else 0.0
     speech_ratio = min(1.0, seg_speech_sec / total_audio_s) if total_audio_s > 0 else 0.0
 
     return SegmentResult(
@@ -213,6 +227,27 @@ def segment_audio_file(
         speech_ratio=round(speech_ratio, 4),
         total_audio_s=round(total_audio_s, 4),
     )
+
+
+def segment_audio_batch(
+    batch: list[tuple[str, str]],
+    vad_threshold: float = 0.5,
+    min_speech_duration_s: float = 2.0,
+    max_speech_duration_s: float = 30.0,
+    speech_pad_s: float = 0.2,
+) -> list[SegmentResult]:
+    """Process a chunk of audio files for speech segmentation in a worker process."""
+    return [
+        segment_audio_file(
+            source_id=sid,
+            filepath=fpath,
+            vad_threshold=vad_threshold,
+            min_speech_duration_s=min_speech_duration_s,
+            max_speech_duration_s=max_speech_duration_s,
+            speech_pad_s=speech_pad_s,
+        )
+        for sid, fpath in batch
+    ]
 
 
 def run_segment(
@@ -251,38 +286,54 @@ def run_segment(
         total_seconds += float(r[2]) if r[2] else 0.0
 
     logger.info(f"Segmenting {len(pending_tasks)} sources using {workers} workers (ProcessPoolExecutor)...")
+    git_sha = ""
+    try:
+        import subprocess
+        git_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+    except Exception:
+        pass
+
     run_id = f"segment_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
-    cat.start_run(run_id, "segment", config.compute_hash())
+    cat.start_run(run_id, "segment", config.compute_hash(), git_commit=git_sha)
     start_time = time.perf_counter()
     all_segments: list[dict[str, Any]] = []
     total_audio_sec = 0.0
     speech_ratios: list[float] = []
+    zero_segment_sources: list[str] = []
+
+    chunk_size = max(1, len(pending_tasks) // (workers * 4)) if workers > 1 else len(pending_tasks)
+    task_chunks = [pending_tasks[i : i + chunk_size] for i in range(0, len(pending_tasks), chunk_size)]
 
     with ProcessPoolExecutor(max_workers=workers, initializer=worker_init) as executor:
-        future_map = {
+        futures = [
             executor.submit(
-                segment_audio_file,
-                source_id,
-                fpath,
+                segment_audio_batch,
+                chunk,
                 config.segment.vad_threshold,
                 config.segment.min_speech_duration_s,
                 config.segment.max_speech_duration_s,
                 config.segment.speech_pad_s,
-            ): source_id
-            for source_id, fpath in pending_tasks
-        }
+            )
+            for chunk in task_chunks
+        ]
 
-        for fut in as_completed(future_map):
-            res: SegmentResult = fut.result()
-            if res.segments:
-                all_segments.extend(res.segments)
-            speech_ratios.append(res.speech_ratio)
-            total_audio_sec += res.total_audio_s
+        for fut in as_completed(futures):
+            batch_results = fut.result()
+            for res in batch_results:
+                if res.segments:
+                    all_segments.extend(res.segments)
+                else:
+                    zero_segment_sources.append(res.source_id)
+                speech_ratios.append(res.speech_ratio)
+                total_audio_sec += res.total_audio_s
 
     # Atomic write to catalog (main process only)
     cat.record_segments_batch(all_segments)
 
     elapsed_s = max(time.perf_counter() - start_time, 1e-4)
+    wall_hours = elapsed_s / 3600.0
+    audio_hours = total_audio_sec / 3600.0
+    throughput = audio_hours / wall_hours if wall_hours > 0 else 0.0
     seg_per_sec = len(all_segments) / elapsed_s if elapsed_s > 0 else 0.0
     avg_speech_ratio = float(np.mean(speech_ratios)) if speech_ratios else 0.0
 
@@ -293,7 +344,9 @@ def run_segment(
         "segments_out": len(all_segments),
         "total_audio_seconds": round(total_audio_sec, 3),
         "elapsed_seconds": round(elapsed_s, 3),
+        "throughput_audio_hours_per_wall_hour": round(throughput, 2),
         "speed_segments_per_second": round(seg_per_sec, 2),
         "avg_speech_ratio": round(avg_speech_ratio, 4),
+        "zero_segment_sources": sorted(zero_segment_sources),
         "workers": workers,
     }

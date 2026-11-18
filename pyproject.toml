@@ -90,4 +90,5 @@ addopts = "-v --strict-markers"
 [tool.coverage.run]
 omit = [
     "audio_token_pipeline/bench/benchmark_dev_clean.py",
+    "audio_token_pipeline/bench/profile_ingest.py",
 ]

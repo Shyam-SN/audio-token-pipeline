@@ -72,10 +72,8 @@ def compute_audio_loudness_metadata(
         )
 
     try:
-        info = sf.info(str(fpath))
-        sr = int(info.samplerate)
-        channels = int(info.channels)
         audio, sr = sf.read(str(fpath), dtype="float32", always_2d=True)
+        channels = int(audio.shape[1])
     except Exception as e:
         return IngestResult(
             source_id=source_id,
@@ -154,6 +152,25 @@ def compute_audio_loudness_metadata(
     )
 
 
+def compute_audio_batch(
+    batch: list[tuple[str, str]],
+    target_lufs: float = -23.0,
+    max_gain_db: float = 20.0,
+    true_peak_limit_db: float = -1.0,
+) -> list[IngestResult]:
+    """Process a chunk of audio files within a worker process."""
+    return [
+        compute_audio_loudness_metadata(
+            source_id=sid,
+            filepath=fpath,
+            target_lufs=target_lufs,
+            max_gain_db=max_gain_db,
+            true_peak_limit_db=true_peak_limit_db,
+        )
+        for sid, fpath in batch
+    ]
+
+
 def run_ingest(
     config: AppConfig,
     num_workers: int | None = None,
@@ -161,7 +178,7 @@ def run_ingest(
 ) -> dict[str, Any]:
     """
     Run Stage 1 Ingest in parallel with ProcessPoolExecutor.
-    Main process performs all DuckDB catalogue writes (single-writer rule).
+    Uses chunked task submission and batched DuckDB writes (single-writer rule).
     """
     cat = Catalog(config.catalog_path)
     workers = num_workers or config.device.num_workers or 6
@@ -193,38 +210,62 @@ def run_ingest(
         total_seconds += float(r[2]) if r[2] else 0.0
 
     logger.info(f"Ingesting {len(pending_tasks)} sources using {workers} workers (ProcessPoolExecutor)...")
+    git_sha = ""
+    try:
+        import subprocess
+        git_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+    except Exception:
+        pass
+
     run_id = f"ingest_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
-    cat.start_run(run_id, "ingest", config.compute_hash())
+    cat.start_run(run_id, "ingest", config.compute_hash(), git_commit=git_sha)
     start_time = time.perf_counter()
     processed_count = 0
     total_audio_sec = 0.0
 
-    with ProcessPoolExecutor(max_workers=workers, initializer=worker_init) as executor:
-        future_map = {
-            executor.submit(compute_audio_loudness_metadata, source_id, fpath): source_id
-            for source_id, fpath in pending_tasks
-        }
+    chunk_size = max(1, len(pending_tasks) // (workers * 4)) if workers > 1 else len(pending_tasks)
+    task_chunks = [pending_tasks[i : i + chunk_size] for i in range(0, len(pending_tasks), chunk_size)]
 
-        for fut in as_completed(future_map):
-            res: IngestResult = fut.result()
-            if res.status == "FAILED":
-                cat.record_dead_letter(
-                    item_id=res.source_id,
-                    stage="ingest",
-                    reason_code=res.loudness_status,
-                    error_message=res.error or "Ingest failed",
-                )
-            else:
-                cat.update_source_ingest_metadata(
-                    source_id=res.source_id,
-                    orig_lufs=res.orig_lufs,
-                    orig_peak_db=res.orig_peak_db,
-                    gain_db=res.gain_db,
-                    loudness_status=res.loudness_status,
-                    status="INGESTED",
-                )
-                total_audio_sec += res.duration_s
-                processed_count += 1
+    success_records: list[dict[str, Any]] = []
+    dead_letter_records: list[dict[str, Any]] = []
+
+    with ProcessPoolExecutor(max_workers=workers, initializer=worker_init) as executor:
+        futures = [
+            executor.submit(
+                compute_audio_batch,
+                chunk,
+                config.ingest.target_lufs,
+                20.0,
+                -1.0,
+            )
+            for chunk in task_chunks
+        ]
+
+        for fut in as_completed(futures):
+            batch_results = fut.result()
+            for res in batch_results:
+                if res.status == "FAILED":
+                    dead_letter_records.append({
+                        "item_id": res.source_id,
+                        "stage": "ingest",
+                        "reason_code": res.loudness_status,
+                        "error_message": res.error or "Ingest failed",
+                    })
+                else:
+                    success_records.append({
+                        "source_id": res.source_id,
+                        "orig_lufs": res.orig_lufs,
+                        "orig_peak_db": res.orig_peak_db,
+                        "gain_db": res.gain_db,
+                        "loudness_status": res.loudness_status,
+                        "status": "INGESTED",
+                    })
+                    total_audio_sec += res.duration_s
+                    processed_count += 1
+
+    # Atomic batch write to DuckDB (main process only)
+    cat.update_sources_ingest_batch(success_records)
+    cat.record_dead_letters_batch(dead_letter_records)
 
     elapsed_s = max(time.perf_counter() - start_time, 1e-4)
     audio_hours = total_audio_sec / 3600.0

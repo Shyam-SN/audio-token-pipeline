@@ -1,0 +1,38 @@
+         34624 function calls (34615 primitive calls) in 4.250 seconds
+
+   Ordered by: cumulative time
+   List reduced from 442 to 30 due to restriction <30>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.006    0.006    4.250    4.250 /Users/prathima/Desktop/Shyam/audio-token-pipeline/audio_token_pipeline/stages/ingest.py:174(run_ingest)
+      130    3.709    0.029    3.709    0.029 {method 'acquire' of '_thread.lock' objects}
+       26    0.000    0.000    3.342    0.129 /opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/concurrent/futures/_base.py:199(as_completed)
+       26    0.000    0.000    3.341    0.129 /opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/threading.py:611(wait)
+       26    0.000    0.000    3.341    0.129 /opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/threading.py:295(wait)
+        1    0.440    0.440    0.451    0.451 /Users/prathima/Desktop/Shyam/audio-token-pipeline/audio_token_pipeline/catalog.py:185(update_sources_ingest_batch)
+        1    0.000    0.000    0.369    0.369 /opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/concurrent/futures/_base.py:646(__exit__)
+        1    0.000    0.000    0.369    0.369 /opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/concurrent/futures/process.py:842(shutdown)
+        1    0.000    0.000    0.368    0.368 /opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/threading.py:1087(join)
+        1    0.000    0.000    0.368    0.368 /opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/threading.py:1125(_wait_for_tstate_lock)
+       40    0.000    0.000    0.039    0.001 {built-in method builtins.next}
+       10    0.007    0.001    0.039    0.004 /Users/prathima/Desktop/Shyam/audio-token-pipeline/audio_token_pipeline/catalog.py:29(connection)
+        6    0.000    0.000    0.032    0.005 /opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/contextlib.py:132(__enter__)
+        5    0.032    0.006    0.032    0.006 /Users/prathima/Desktop/Shyam/audio-token-pipeline/audio_token_pipeline/catalog.py:25(get_connection)
+        1    0.000    0.000    0.031    0.031 /Users/prathima/Desktop/Shyam/audio-token-pipeline/audio_token_pipeline/stages/ingest.py:233(<listcomp>)
+       25    0.000    0.000    0.030    0.001 /opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/concurrent/futures/process.py:788(submit)
+       25    0.000    0.000    0.027    0.001 /opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/concurrent/futures/process.py:754(_adjust_process_count)
+        6    0.000    0.000    0.027    0.005 /opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/concurrent/futures/process.py:777(_spawn_process)
+        6    0.000    0.000    0.026    0.004 /opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/process.py:110(start)
+        6    0.000    0.000    0.026    0.004 /opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/context.py:285(_Popen)
+        6    0.000    0.000    0.025    0.004 /opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/popen_spawn_posix.py:30(__init__)
+        6    0.001    0.000    0.025    0.004 /opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/popen_fork.py:15(__init__)
+        6    0.001    0.000    0.025    0.004 /opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/popen_spawn_posix.py:38(_launch)
+        8    0.023    0.003    0.023    0.003 {built-in method _posixsubprocess.fork_exec}
+        7    0.001    0.000    0.020    0.003 /opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/multiprocessing/util.py:450(spawnv_passfds)
+        1    0.000    0.000    0.014    0.014 /opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/subprocess.py:417(check_output)
+        1    0.000    0.000    0.014    0.014 /opt/homebrew/Cellar/python@3.11/3.11.16/Frameworks/Python.framework/Versions/3.11/lib/python3.11/subprocess.py:506(run)
+        1    0.002    0.002    0.011    0.011 /Users/prathima/Desktop/Shyam/audio-token-pipeline/audio_token_pipeline/catalog.py:294(start_run)
+        1    0.000    0.000    0.008    0.008 /Users/prathima/Desktop/Shyam/audio-token-pipeline/audio_token_pipeline/catalog.py:20(__init__)
+        1    0.001    0.001    0.008    0.008 /Users/prathima/Desktop/Shyam/audio-token-pipeline/audio_token_pipeline/catalog.py:38(_init_schema)
+
+

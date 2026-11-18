@@ -72,6 +72,7 @@ class Catalog:
                     run_id VARCHAR PRIMARY KEY,
                     stage VARCHAR NOT NULL,
                     config_hash VARCHAR NOT NULL,
+                    git_commit VARCHAR DEFAULT '',
                     start_time TIMESTAMPTZ,
                     end_time TIMESTAMPTZ,
                     items_in INTEGER DEFAULT 0,
@@ -79,6 +80,7 @@ class Catalog:
                     status VARCHAR,
                     error VARCHAR
                 );
+                ALTER TABLE runs ADD COLUMN IF NOT EXISTS git_commit VARCHAR DEFAULT '';
 
                 CREATE TABLE IF NOT EXISTS segments (
                     segment_id VARCHAR PRIMARY KEY,
@@ -171,8 +173,32 @@ class Catalog:
         status: str = "INGESTED",
     ) -> None:
         """Update source loudness, true peak, and normalisation gain metadata without saving resampled audio."""
+        self.update_sources_ingest_batch([{
+            "source_id": source_id,
+            "orig_lufs": orig_lufs,
+            "orig_peak_db": orig_peak_db,
+            "gain_db": gain_db,
+            "loudness_status": loudness_status,
+            "status": status,
+        }])
+
+    def update_sources_ingest_batch(self, records: list[dict[str, Any]]) -> None:
+        """Batch update source loudness, true peak, and normalisation gain metadata atomically."""
+        if not records:
+            return
+        tuples = [
+            (
+                r.get("orig_lufs"),
+                r.get("orig_peak_db"),
+                r.get("gain_db", 0.0),
+                r.get("loudness_status", "NORMALIZED"),
+                r.get("status", "INGESTED"),
+                r["source_id"],
+            )
+            for r in records
+        ]
         with self.connection() as con:
-            con.execute(
+            con.executemany(
                 """
                 UPDATE sources
                 SET orig_lufs = ?,
@@ -182,7 +208,35 @@ class Catalog:
                     status = ?
                 WHERE source_id = ?;
                 """,
-                [orig_lufs, orig_peak_db, gain_db, loudness_status, status, source_id],
+                tuples,
+            )
+
+    def record_dead_letters_batch(self, records: list[dict[str, Any]]) -> None:
+        """Batch insert quarantined dead letter items atomically."""
+        if not records:
+            return
+        tuples = [
+            (
+                r["item_id"],
+                r["stage"],
+                r["reason_code"],
+                r.get("error_message", ""),
+                datetime.now(UTC),
+            )
+            for r in records
+        ]
+        with self.connection() as con:
+            con.executemany(
+                """
+                INSERT INTO dead_letter (item_id, stage, reason_code, error_message, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT (item_id) DO UPDATE SET
+                    stage = EXCLUDED.stage,
+                    reason_code = EXCLUDED.reason_code,
+                    error_message = EXCLUDED.error_message,
+                    created_at = EXCLUDED.created_at;
+                """,
+                tuples,
             )
 
     def record_segments_batch(self, segments: list[dict[str, Any]]) -> None:
@@ -237,15 +291,15 @@ class Catalog:
                 [item_id, stage, reason_code, error_message or "", datetime.now(UTC)],
             )
 
-    def start_run(self, run_id: str, stage: str, config_hash: str) -> None:
+    def start_run(self, run_id: str, stage: str, config_hash: str, git_commit: str = "") -> None:
         """Audit log the beginning of a pipeline run."""
         with self.connection() as con:
             con.execute(
                 """
-                INSERT INTO runs (run_id, stage, config_hash, start_time, status)
-                VALUES (?, ?, ?, ?, 'RUNNING');
+                INSERT INTO runs (run_id, stage, config_hash, git_commit, start_time, status)
+                VALUES (?, ?, ?, ?, ?, 'RUNNING');
                 """,
-                [run_id, stage, config_hash, datetime.now(UTC)],
+                [run_id, stage, config_hash, git_commit, datetime.now(UTC)],
             )
 
     def finish_run(

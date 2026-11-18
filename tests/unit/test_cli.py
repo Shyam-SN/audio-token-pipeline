@@ -36,9 +36,10 @@ def test_cli_run_stub() -> None:
 
 
 def test_cli_report() -> None:
-    result = runner.invoke(app, ["report", "stage_0_foundation"])
-    assert result.exit_code == 0
-    assert "Report generated successfully" in result.stdout
+    for stg in ["stage_0_foundation", "stage_1_ingest", "stage_2_segment"]:
+        result = runner.invoke(app, ["report", stg])
+        assert result.exit_code == 0
+        assert "Report generated successfully" in result.stdout
 
 
 def test_cli_stage_stubs(monkeypatch: pytest.MonkeyPatch) -> None:
