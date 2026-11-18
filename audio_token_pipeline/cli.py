@@ -163,10 +163,16 @@ def bench(
 
 @app.command()
 def report(
-    stage: str | None = typer.Option(None, "--stage", help="Stage name to report"),
+    stage: str = typer.Argument("stage_0_foundation", help="Stage name to report (e.g. stage_0_foundation)"),
+    config: Path = typer.Option(Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"),
 ) -> None:
-    """Generate verification reports from catalog metrics."""
-    console.print("[yellow]Report generator ready.[/yellow]")
+    """Generate verification reports strictly from captured catalogue and coverage data."""
+    from audio_token_pipeline.bench.report import generate_stage_report
+
+    md_path, json_path = generate_stage_report(stage_name=stage, config_path=config)
+    console.print("[bold green]Report generated successfully:[/bold green]")
+    console.print(f"  Markdown: [cyan]{md_path}[/cyan]")
+    console.print(f"  JSON:     [cyan]{json_path}[/cyan]")
 
 
 @app.command()

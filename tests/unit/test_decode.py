@@ -1,6 +1,7 @@
 """Unit tests for audio decode verification."""
 
 from pathlib import Path
+
 from audio_token_pipeline.io.decode import decode_and_verify_audio, read_wav_header_duration
 
 
@@ -23,3 +24,4 @@ def test_read_wav_header_duration_invalid(tmp_path: Path) -> None:
     not_wav = tmp_path / "not_wav.txt"
     not_wav.write_text("plain text file", encoding="utf-8")
     assert read_wav_header_duration(not_wav) is None
+

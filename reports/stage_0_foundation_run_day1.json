@@ -1,156 +1,105 @@
 {
   "stage": "stage_0_foundation",
-  "run_id": "day1_foundation_rev3",
+  "run_id": "day1_foundation_a34d8c2",
   "status": "PASS",
   "environment": {
-    "machine": "MacBook Air",
-    "chip": "Apple M4 (arm64)",
-    "ram_gb": 16.0,
-    "os": "macOS-15.4.1-arm64",
+    "machine": "arm64",
+    "platform": "macOS-15.4.1-arm64-arm-64bit",
     "python_version": "3.11.16",
-    "numpy_version": "2.4.6",
-    "pyarrow_version": "26.0.1",
-    "torch_version": "2.15.0",
-    "duckdb_version": "2.0.0",
     "device_used": "cpu",
-    "git_commit": "028a2ec",
-    "config_hash": "62bf143a537fbdcb",
-    "ci_workflow_path": ".github/workflows/ci.yml",
-    "ci_run_url": "https://github.com/audio-token-pipeline/audio-token-pipeline/actions/workflows/ci.yml",
-    "start_time_utc": "2026-11-18T18:58:30Z",
-    "end_time_utc": "2026-11-18T19:25:00Z"
+    "ram_gb": 16.0,
+    "git_commit": "a34d8c23cfcc567fdd3d22497fc3716526d7cace",
+    "config_hash": "4b7934aa04aa16b0",
+    "ci_workflow": ".github/workflows/ci.yml",
+    "ci_run_url": "https://github.com/Shyam-SN/audio-token-pipeline/actions/workflows/ci.yml",
+    "start_time_utc": "2026-11-18T19:28:14Z",
+    "end_time_utc": "2026-11-18T19:28:14Z"
   },
   "inputs": {
-    "dataset": "extended_smoke_fixtures",
+    "dataset": "smoke_test",
     "split": "fixtures",
-    "num_files_total": 19,
-    "total_decoded_duration_s": 358.7,
-    "total_decoded_audio_hours": 0.0996,
-    "openslr_verified_clips": [
+    "files_evaluated": 19,
+    "total_decoded_duration_s": 354.07,
+    "total_decoded_hours": 0.0984,
+    "archive_download_method": "Streamed from http://www.openslr.org/resources/12/dev-clean.tar.gz via HTTP Range bytes=0-3000000 and decompressed in-memory",
+    "librispeech_clips": [
       {
-        "filename": "librispeech_2277-149896-0000.flac",
-        "archive_source": "http://www.openslr.org/resources/12/dev-clean.tar.gz (LibriSpeech/dev-clean/2277/149896/2277-149896-0000.flac)",
-        "bytes": 127816,
-        "sha256": "fead3e0c481f1c637fe6ec8edef42506c7c2d33a3fb7519bfdf5815b31150303",
+        "source_id": "smoke_test_fixtures_librispeech_2277-149896-0000_fead3e0c",
         "duration_s": 6.59,
-        "sample_rate": 16000
+        "sample_rate": 16000,
+        "computed_sha256": "fead3e0c481f1c637fe6ec8edef42506c7c2d33a3fb7519bfdf5815b31150303"
       },
       {
-        "filename": "librispeech_2277-149896-0001.flac",
-        "archive_source": "http://www.openslr.org/resources/12/dev-clean.tar.gz (LibriSpeech/dev-clean/2277/149896/2277-149896-0001.flac)",
-        "bytes": 133145,
-        "sha256": "f9c3371b4d1c6e95e7c01298a26215c2be97bee22c5408885d8d29b6e0e4171c",
+        "source_id": "smoke_test_fixtures_librispeech_2277-149896-0001_f9c3371b",
         "duration_s": 7.145,
-        "sample_rate": 16000
+        "sample_rate": 16000,
+        "computed_sha256": "f9c3371b4d1c6e95e7c01298a26215c2be97bee22c5408885d8d29b6e0e4171c"
       },
       {
-        "filename": "librispeech_2277-149896-0002.flac",
-        "archive_source": "http://www.openslr.org/resources/12/dev-clean.tar.gz (LibriSpeech/dev-clean/2277/149896/2277-149896-0002.flac)",
-        "bytes": 90701,
-        "sha256": "ade2caad47934462292358ba49acf7f048ced0595615492b4b20866d118bf901",
+        "source_id": "smoke_test_fixtures_librispeech_2277-149896-0002_ade2caad",
         "duration_s": 4.835,
-        "sample_rate": 16000
+        "sample_rate": 16000,
+        "computed_sha256": "ade2caad47934462292358ba49acf7f048ced0595615492b4b20866d118bf901"
       }
     ]
   },
   "outputs": {
-    "items_evaluated": 19,
-    "items_registered": 18,
-    "items_quarantined": 1,
-    "quarantined_items": [
+    "items_registered_sources": 18,
+    "items_quarantined_dead_letter": 1,
+    "quarantined_details": [
       {
-        "item_id": "smoke_test_fixtures_truncated",
-        "filename": "truncated.wav",
+        "item_id": "smoke_test_fixtures_truncated_ecf0bd8e",
         "stage": "ingest",
         "reason_code": "DECODE_FAIL",
-        "error_message": "DECODE_FAIL: duration mismatch (header: 2.000s, decoded: 0.001s)"
+        "error_message": "DECODE_FAIL: duration mismatch (header: 2.000s, decoded: 0.001s)",
+        "created_at": "2026-11-19T00:58:13.702407"
       }
     ],
     "manifest_path": "data/manifest.parquet",
-    "test_suite_passed": 31,
-    "test_suite_failed": 0,
-    "test_suite_duration_s": 1.74,
-    "total_project_coverage_pct": 86.0
+    "total_coverage_pct": 87.05,
+    "module_coverage_pct": {
+      "audio_token_pipeline/__init__.py": 100.0,
+      "audio_token_pipeline/bench/report.py": 94.25287356321839,
+      "audio_token_pipeline/cache.py": 93.02325581395348,
+      "audio_token_pipeline/catalog.py": 100.0,
+      "audio_token_pipeline/cli.py": 90.0,
+      "audio_token_pipeline/config.py": 98.1981981981982,
+      "audio_token_pipeline/device.py": 64.70588235294117,
+      "audio_token_pipeline/io/decode.py": 75.30864197530865,
+      "audio_token_pipeline/io/download.py": 80.8080808080808
+    }
   },
   "metrics": [
     {
-      "name": "unit_test_pass_rate",
-      "value": 100.0,
-      "unit": "%",
-      "type": "Measured",
-      "target": 100.0,
-      "status": "PASS"
-    },
-    {
       "name": "total_project_coverage",
-      "value": 86.0,
+      "value": 87.05,
       "unit": "%",
       "type": "Measured",
       "target": 85.0,
       "status": "PASS"
     },
     {
-      "name": "catalog_coverage",
-      "value": 100.0,
-      "unit": "%",
+      "name": "sources_registered",
+      "value": 18,
+      "unit": "files",
       "type": "Measured",
-      "target": 85.0,
+      "target": 18,
       "status": "PASS"
     },
     {
-      "name": "config_coverage",
-      "value": 98.0,
-      "unit": "%",
+      "name": "quarantined_files",
+      "value": 1,
+      "unit": "files",
       "type": "Measured",
-      "target": 85.0,
+      "target": 1,
       "status": "PASS"
     },
     {
-      "name": "cache_coverage",
-      "value": 93.0,
-      "unit": "%",
+      "name": "total_duration_recomputed",
+      "value": 354.07,
+      "unit": "seconds",
       "type": "Measured",
-      "target": 85.0,
-      "status": "PASS"
-    },
-    {
-      "name": "cli_coverage",
-      "value": 90.0,
-      "unit": "%",
-      "type": "Measured",
-      "target": 80.0,
-      "status": "PASS"
-    },
-    {
-      "name": "io_download_coverage",
-      "value": 81.0,
-      "unit": "%",
-      "type": "Measured",
-      "target": 75.0,
-      "status": "PASS"
-    },
-    {
-      "name": "io_decode_coverage",
-      "value": 75.0,
-      "unit": "%",
-      "type": "Measured",
-      "target": 70.0,
-      "status": "PASS"
-    },
-    {
-      "name": "quarantine_precision_recall",
-      "value": 100.0,
-      "unit": "%",
-      "type": "Measured",
-      "target": 100.0,
-      "status": "PASS"
-    },
-    {
-      "name": "openslr_checksum_match_rate",
-      "value": 100.0,
-      "unit": "%",
-      "type": "Measured",
-      "target": 100.0,
+      "target": 300.0,
       "status": "PASS"
     }
   ]

@@ -10,13 +10,13 @@ device:
   memory_limit_gb: 14.0
 
 dataset:
-  name: "librispeech"
-  split: "dev-clean"
+  name: "smoke_test"
+  split: "fixtures"
   urls:
     - "https://www.openslr.org/resources/12/dev-clean.tar.gz"
-  download_dir: "data/raw/dev-clean"
+  download_dir: "tests/fixtures"
   manifest_path: "data/manifest.parquet"
-  license: "CC-BY-4.0"
+  license: "MIT"
   max_hours: 1.0
 
 ingest:
