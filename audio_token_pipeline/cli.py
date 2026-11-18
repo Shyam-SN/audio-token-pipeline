@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from pathlib import Path
 
 import typer
@@ -100,17 +101,45 @@ def download(
 @app.command()
 def ingest(
     config: Path = typer.Option(Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"),
+    workers: int | None = typer.Option(None, "--workers", "-w", help="Number of worker processes"),
+    max_hours: float | None = typer.Option(None, "--max-hours", help="Max hours to ingest"),
 ) -> None:
-    """Stage 1: Ingest, resample to 24 kHz mono, loudness-normalise to -23 LUFS."""
-    console.print("[yellow]Stage 1 (ingest) will run in Day 2[/yellow]")
+    """Stage 1: Streaming ingest and EBU R128 loudness normalisation metadata (metadata only)."""
+    from audio_token_pipeline.stages.ingest import run_ingest
+
+    cfg = AppConfig.from_yaml(config) if config.exists() else AppConfig()
+    cat = Catalog(cfg.catalog_path)
+    run_id = f"ingest_{int(time.time())}"
+    cat.start_run(run_id=run_id, stage="ingest", config_hash=cfg.compute_hash("ingest"))
+
+    console.print("[bold blue]Starting Stage 1 (Ingest)...[/bold blue]")
+    metrics = run_ingest(cfg, num_workers=workers, max_hours=max_hours)
+    cat.finish_run(run_id=run_id, status="SUCCESS", items_in=metrics["items_in"], items_out=metrics["items_out"])
+
+    console.print(f"[bold green]Stage 1 Complete:[/bold green] {metrics['items_out']}/{metrics['items_in']} sources ingested.")
+    console.print(f"Throughput: [bold cyan]{metrics['throughput_audio_hours_per_wall_hour']} audio-h / wall-clock-h[/bold cyan] ({metrics['workers']} workers)")
 
 
 @app.command()
 def segment(
     config: Path = typer.Option(Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"),
+    workers: int | None = typer.Option(None, "--workers", "-w", help="Number of worker processes"),
+    max_hours: float | None = typer.Option(None, "--max-hours", help="Max hours to segment"),
 ) -> None:
-    """Stage 2: Voice Activity Detection (Silero VAD) segmentation."""
-    console.print("[yellow]Stage 2 (segment) will run in Day 2[/yellow]")
+    """Stage 2: Voice Activity Detection (Silero VAD) on on-the-fly 16 kHz stream."""
+    from audio_token_pipeline.stages.segment import run_segment
+
+    cfg = AppConfig.from_yaml(config) if config.exists() else AppConfig()
+    cat = Catalog(cfg.catalog_path)
+    run_id = f"segment_{int(time.time())}"
+    cat.start_run(run_id=run_id, stage="segment", config_hash=cfg.compute_hash("segment"))
+
+    console.print("[bold blue]Starting Stage 2 (Segmentation)...[/bold blue]")
+    metrics = run_segment(cfg, num_workers=workers, max_hours=max_hours)
+    cat.finish_run(run_id=run_id, status="SUCCESS", items_in=metrics["items_in"], items_out=metrics["segments_out"])
+
+    console.print(f"[bold green]Stage 2 Complete:[/bold green] {metrics['segments_out']} segments generated across {metrics['items_in']} sources.")
+    console.print(f"Speed: [bold cyan]{metrics['speed_segments_per_second']} segments/s[/bold cyan], avg speech ratio: {metrics['avg_speech_ratio']}")
 
 
 @app.command()
@@ -157,8 +186,12 @@ def feed_bench(
 def bench(
     config: Path = typer.Option(Path("configs/dev_mac.yaml"), "--config", "-c", help="Path to config"),
 ) -> None:
-    """Run end-to-end benchmark suite and write results JSON."""
-    console.print("[yellow]Benchmark suite will run in Day 7-8[/yellow]")
+    """Benchmark Stage 1 (Ingest) and Stage 2 (Segmentation) across 1 vs 6 workers."""
+    from audio_token_pipeline.bench.benchmark_dev_clean import run_benchmark_1_and_6_workers
+
+    console.print("[bold blue]Starting Throughput Benchmarks (1 worker vs 6 workers)...[/bold blue]")
+    run_benchmark_1_and_6_workers(config_path=config)
+    console.print("[bold green]Benchmarks complete.[/bold green]")
 
 
 @app.command()

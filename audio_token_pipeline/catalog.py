@@ -48,9 +48,17 @@ class Catalog:
                     sample_rate INTEGER,
                     channels INTEGER,
                     sha256 VARCHAR NOT NULL,
+                    orig_lufs DOUBLE,
+                    orig_peak_db DOUBLE,
+                    gain_db DOUBLE,
+                    loudness_status VARCHAR DEFAULT 'PENDING',
                     status VARCHAR DEFAULT 'PENDING',
                     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
                 );
+                ALTER TABLE sources ADD COLUMN IF NOT EXISTS orig_lufs DOUBLE;
+                ALTER TABLE sources ADD COLUMN IF NOT EXISTS orig_peak_db DOUBLE;
+                ALTER TABLE sources ADD COLUMN IF NOT EXISTS gain_db DOUBLE;
+                ALTER TABLE sources ADD COLUMN IF NOT EXISTS loudness_status VARCHAR DEFAULT 'PENDING';
 
                 CREATE TABLE IF NOT EXISTS dead_letter (
                     item_id VARCHAR PRIMARY KEY,
@@ -151,6 +159,60 @@ class Catalog:
                     status = EXCLUDED.status;
                 """,
                 [source_id, filepath, dataset, split, duration_s, sample_rate, channels, sha256, status],
+            )
+
+    def update_source_ingest_metadata(
+        self,
+        source_id: str,
+        orig_lufs: float | None,
+        orig_peak_db: float | None,
+        gain_db: float,
+        loudness_status: str,
+        status: str = "INGESTED",
+    ) -> None:
+        """Update source loudness, true peak, and normalisation gain metadata without saving resampled audio."""
+        with self.connection() as con:
+            con.execute(
+                """
+                UPDATE sources
+                SET orig_lufs = ?,
+                    orig_peak_db = ?,
+                    gain_db = ?,
+                    loudness_status = ?,
+                    status = ?
+                WHERE source_id = ?;
+                """,
+                [orig_lufs, orig_peak_db, gain_db, loudness_status, status, source_id],
+            )
+
+    def record_segments_batch(self, segments: list[dict[str, Any]]) -> None:
+        """Atomically insert detected speech segment coordinates into DuckDB."""
+        if not segments:
+            return
+        records = [
+            (
+                s["segment_id"],
+                s["source_id"],
+                int(s["start_ms"]),
+                int(s["end_ms"]),
+                float(s["duration_s"]),
+                float(s.get("speech_prob", 1.0)),
+                datetime.now(UTC),
+            )
+            for s in segments
+        ]
+        with self.connection() as con:
+            con.executemany(
+                """
+                INSERT INTO segments (segment_id, source_id, start_ms, end_ms, duration_s, speech_prob, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (segment_id) DO UPDATE SET
+                    start_ms = EXCLUDED.start_ms,
+                    end_ms = EXCLUDED.end_ms,
+                    duration_s = EXCLUDED.duration_s,
+                    speech_prob = EXCLUDED.speech_prob;
+                """,
+                records,
             )
 
     def record_dead_letter(

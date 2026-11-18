@@ -77,7 +77,7 @@ def test_scan_audio_metadata_extended_fixtures() -> None:
         m_lib = scan_audio_metadata(l_clip)
         assert m_lib["sample_rate"] == 16000
         assert m_lib["channels"] == 1
-        assert m_lib["duration_s"] is not None and m_lib["duration_s"] > 0
+        assert isinstance(m_lib["duration_s"], (int, float)) and m_lib["duration_s"] > 0
 
 
 def test_build_manifest_parquet(tmp_path: Path) -> None:

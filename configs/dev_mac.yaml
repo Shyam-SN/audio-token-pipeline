@@ -5,7 +5,7 @@ cache_dir: ".cache/atp"
 
 device:
   device: "auto"
-  num_workers: 4
+  num_workers: 6
   pin_memory: false
   memory_limit_gb: 14.0
 

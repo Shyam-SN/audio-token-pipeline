@@ -1,0 +1,84 @@
+# Configuration for full LibriSpeech dev-clean benchmark (5.4 audio hours)
+version: "0.1.0"
+catalog_path: "catalog_dev_clean.duckdb"
+cache_dir: ".cache/atp"
+
+device:
+  device: "auto"
+  num_workers: 6
+  pin_memory: false
+  memory_limit_gb: 14.0
+
+dataset:
+  name: "librispeech"
+  split: "dev-clean"
+  urls:
+    - "https://www.openslr.org/resources/12/dev-clean.tar.gz"
+  download_dir: "data/raw/dev-clean/LibriSpeech/dev-clean"
+  manifest_path: "data/manifest_dev_clean.parquet"
+  license: "CC-BY-4.0"
+  max_hours: 5.4
+
+ingest:
+  target_sample_rate: 24000
+  target_channels: 1
+  target_lufs: -23.0
+  resample_quality: "soxr_hq"
+  supported_formats: ["flac", "wav"]
+
+segment:
+  vad_model: "silero_vad"
+  vad_threshold: 0.5
+  sample_rate: 16000
+  min_speech_duration_s: 2.0
+  max_speech_duration_s: 30.0
+  speech_pad_s: 0.2
+  energy_split_window_s: 0.5
+
+filter:
+  max_silence_ratio: 0.40
+  max_clip_fraction: 0.001
+  clip_threshold: 0.999
+  min_snr_db: 10.0
+  max_dc_offset: 0.01
+  min_duration_s: 2.0
+  max_duration_s: 30.0
+  duplicate_similarity_threshold: 0.95
+  min_speech_prob: 0.60
+  whisper_expected_lang: "en"
+
+transcribe:
+  model_name: "large-v3-turbo"
+  backend: "auto"
+  compute_type: "float16"
+  min_avg_logprob: -1.0
+  max_no_speech_prob: 0.6
+  bucket_batch_size: 16
+  max_padding_ratio: 0.20
+
+tokenize:
+  codec: "mimi"
+  target_bandwidth: 12.5
+  num_codebooks: 8
+  sample_rate: 24000
+  dtype: "int16"
+  batch_size: 8
+  queue_size: 16
+
+shard:
+  target_shard_size_mb: 512
+  output_dir: "data/shards"
+  version: "v0.1.0"
+  shard_pattern: "atp-{version}-{split}-{shard_id:06d}.tar"
+  train_val_split_seed: 42
+  val_ratio: 0.05
+
+feed:
+  token_budget_per_batch: 32768
+  shuffle_buffer_size: 2000
+  num_workers: 6
+  probe_model_layers: 4
+  probe_model_dim: 256
+  max_steps: 100
+  target_max_stall_pct: 5.0
+

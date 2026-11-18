@@ -1,0 +1,45 @@
+{
+  "dataset": "librispeech",
+  "split": "dev-clean",
+  "timestamp_utc": "2026-11-18T19:55:16Z",
+  "stage_1_ingest": {
+    "1_worker": {
+      "items_in": 2703,
+      "items_out": 2703,
+      "total_audio_seconds": 19396.121,
+      "elapsed_seconds": 22.381,
+      "throughput_audio_hours_per_wall_hour": 866.64,
+      "workers": 1
+    },
+    "6_workers": {
+      "items_in": 2703,
+      "items_out": 2703,
+      "total_audio_seconds": 19396.121,
+      "elapsed_seconds": 23.181,
+      "throughput_audio_hours_per_wall_hour": 836.72,
+      "workers": 6
+    },
+    "speedup_6w_vs_1w": 0.97
+  },
+  "stage_2_segment": {
+    "1_worker": {
+      "items_in": 2703,
+      "segments_out": 2697,
+      "total_audio_seconds": 19396.121,
+      "elapsed_seconds": 52.944,
+      "speed_segments_per_second": 50.94,
+      "avg_speech_ratio": 0.9036,
+      "workers": 1
+    },
+    "6_workers": {
+      "items_in": 2703,
+      "segments_out": 2697,
+      "total_audio_seconds": 19396.121,
+      "elapsed_seconds": 15.749,
+      "speed_segments_per_second": 171.25,
+      "avg_speech_ratio": 0.9036,
+      "workers": 6
+    },
+    "speedup_6w_vs_1w": 3.36
+  }
+}

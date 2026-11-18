@@ -1,5 +1,6 @@
 """Unit tests for the Typer CLI commands."""
 
+import pytest
 from typer.testing import CliRunner
 
 from audio_token_pipeline.cli import app
@@ -40,7 +41,12 @@ def test_cli_report() -> None:
     assert "Report generated successfully" in result.stdout
 
 
-def test_cli_stage_stubs() -> None:
+def test_cli_stage_stubs(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Avoid overwriting benchmark cache during unit testing
+    monkeypatch.setattr(
+        "audio_token_pipeline.bench.benchmark_dev_clean.run_benchmark_1_and_6_workers",
+        lambda *args, **kwargs: {},
+    )
     for cmd in ["ingest", "segment", "filter", "transcribe", "tokenize", "shard", "feed-bench", "bench"]:
         res = runner.invoke(app, [cmd])
         assert res.exit_code == 0

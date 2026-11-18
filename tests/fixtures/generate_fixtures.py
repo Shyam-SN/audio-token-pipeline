@@ -71,8 +71,8 @@ def generate_fixtures() -> dict[str, Path]:
     sf.write(str(path_music), music, sr_default)
     created_files["music"] = path_music
 
-    # 7. Short duration clip (< 1s, 0.5s)
-    short_audio = np.sin(2 * np.pi * 440 * np.linspace(0, 0.5, int(sr_default * 0.5), endpoint=False, dtype=np.float32))
+    # 7. Short duration clip (< 400ms, 0.3s)
+    short_audio = np.sin(2 * np.pi * 440 * np.linspace(0, 0.3, int(sr_default * 0.3), endpoint=False, dtype=np.float32))
     path_short = FIXTURES_DIR / "short_clip.wav"
     sf.write(str(path_short), short_audio, sr_default)
     created_files["short"] = path_short
