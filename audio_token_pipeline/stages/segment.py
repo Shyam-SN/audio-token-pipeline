@@ -18,36 +18,9 @@ import torchaudio.functional as F
 
 from audio_token_pipeline.catalog import Catalog
 from audio_token_pipeline.config import AppConfig
+from audio_token_pipeline.vad import get_speech_timestamps_from_probs, get_vad_model
 
 logger = logging.getLogger(__name__)
-
-# Global worker cache for Silero VAD model
-_VAD_MODEL = None
-_VAD_UTILS = None
-
-
-def get_vad_model():  # type: ignore[no-untyped-def]
-    """Lazy load cached Silero VAD ONNX model per worker process."""
-    global _VAD_MODEL, _VAD_UTILS
-    if _VAD_MODEL is None:
-        torch.set_num_threads(1)
-        hub_dir = Path.home() / ".cache/torch/hub/snakers4_silero-vad_master"
-        if hub_dir.exists():
-            _VAD_MODEL, _VAD_UTILS = torch.hub.load(
-                repo_or_dir=str(hub_dir),
-                model="silero_vad",
-                source="local",
-                onnx=True,
-                trust_repo=True,
-            )
-        else:
-            _VAD_MODEL, _VAD_UTILS = torch.hub.load(
-                repo_or_dir="snakers4/silero-vad",
-                model="silero_vad",
-                onnx=True,
-                trust_repo=True,
-            )
-    return _VAD_MODEL, _VAD_UTILS
 
 
 def worker_init() -> None:
@@ -123,10 +96,7 @@ def segment_audio_file(
         audio_16k = audio_mono
 
     # Silero VAD inference
-    model, utils = get_vad_model()
-    import inspect
-    mod = inspect.getmodule(utils[0])
-    get_speech_timestamps_from_probs = getattr(mod, "get_speech_timestamps_from_probs")
+    model, _ = get_vad_model()
 
     window = 512
     model.reset_states()
@@ -138,7 +108,7 @@ def segment_audio_file(
         chunk = audio_t[cur : cur + window]
         if len(chunk) < window:
             chunk = torch.nn.functional.pad(chunk, (0, int(window - len(chunk))))
-        probs.append(model(chunk, 16000).item())
+        probs.append(float(model(chunk, 16000)))
 
     raw_timestamps = get_speech_timestamps_from_probs(
         probs,
