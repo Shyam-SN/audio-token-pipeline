@@ -1,0 +1,74 @@
+{
+  "stage": "stage_0_foundation",
+  "run_id": "day1_foundation_e24fe2f",
+  "status": "PASS",
+  "environment": {
+    "machine": "MacBook Air",
+    "chip": "Apple M4 (arm64)",
+    "ram_gb": 16.0,
+    "os": "macOS-15.4.1-arm64",
+    "python_version": "3.11.16",
+    "torch_version": "2.15.0",
+    "duckdb_version": "2.0.0",
+    "device_used": "cpu",
+    "git_commit": "e24fe2f",
+    "config_hash": "62bf143a537fbdcb"
+  },
+  "inputs": {
+    "dataset": "smoke_test_fixtures",
+    "split": "fixtures",
+    "num_files": 8,
+    "total_duration_s": 300.5,
+    "total_audio_hours": 0.0835
+  },
+  "outputs": {
+    "items_in": 8,
+    "items_out": 8,
+    "manifest_path": "data/manifest.parquet",
+    "test_suite_passed": 21,
+    "test_suite_failed": 0,
+    "test_suite_duration_s": 1.41
+  },
+  "metrics": [
+    {
+      "name": "unit_test_pass_rate",
+      "value": 100.0,
+      "unit": "%",
+      "type": "Measured",
+      "target": 100.0,
+      "status": "PASS"
+    },
+    {
+      "name": "catalog_coverage",
+      "value": 100.0,
+      "unit": "%",
+      "type": "Measured",
+      "target": 85.0,
+      "status": "PASS"
+    },
+    {
+      "name": "cache_coverage",
+      "value": 93.0,
+      "unit": "%",
+      "type": "Measured",
+      "target": 85.0,
+      "status": "PASS"
+    },
+    {
+      "name": "config_coverage",
+      "value": 98.0,
+      "unit": "%",
+      "type": "Measured",
+      "target": 85.0,
+      "status": "PASS"
+    },
+    {
+      "name": "smoke_fixture_duration",
+      "value": 300.5,
+      "unit": "seconds",
+      "type": "Measured",
+      "target": 300.0,
+      "status": "PASS"
+    }
+  ]
+}
