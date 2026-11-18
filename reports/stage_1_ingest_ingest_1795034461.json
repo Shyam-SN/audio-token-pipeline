@@ -1,0 +1,145 @@
+{
+  "stage": "stage_1_ingest",
+  "run_id": "ingest_1795034461",
+  "status": "FAIL",
+  "environment": {
+    "machine": "arm64",
+    "platform": "macOS-15.4.1-arm64-arm-64bit",
+    "python_version": "3.11.16",
+    "device_used": "cpu",
+    "ram_gb": 16.0,
+    "git_commit": "f5b96352f7ee79679efa8cc2363238ad230eb04b",
+    "config_hash": "90d1fc24d6bd94fc",
+    "ci_workflow": ".github/workflows/ci.yml",
+    "ci_run_url": "https://github.com/Shyam-SN/audio-token-pipeline/actions/runs/44389941085",
+    "start_time_utc": "2026-11-19T02:11:01Z",
+    "end_time_utc": "2026-11-19T02:11:01Z"
+  },
+  "inputs": {
+    "dataset": "smoke_test",
+    "split": "fixtures",
+    "files_evaluated": 19,
+    "total_decoded_duration_s": 354.07,
+    "total_decoded_hours": 0.0984
+  },
+  "outputs": {
+    "sources_registered": 18,
+    "sources_ingested": 18,
+    "loudness_normalized": 16,
+    "loudness_undefined": 2,
+    "segments_created": 3,
+    "zero_segment_sources_count": 15,
+    "zero_segment_sources": [
+      "smoke_test_fixtures_clean_formant_315f2288 (40.00s)",
+      "smoke_test_fixtures_clipped_7fc2d4db (30.00s)",
+      "smoke_test_fixtures_dc_offset_b1bc3d85 (30.00s)",
+      "smoke_test_fixtures_extended_speech_8bda80f9 (100.00s)",
+      "smoke_test_fixtures_format_speech_4fe90a02 (5.00s)",
+      "smoke_test_fixtures_format_speech_7a3a9318 (5.00s)",
+      "smoke_test_fixtures_format_speech_8990d1dd (5.00s)",
+      "smoke_test_fixtures_music_chord_deeb68f8 (30.00s)",
+      "smoke_test_fixtures_noisy_5db_e5993299 (40.00s)",
+      "smoke_test_fixtures_rate_16k_b51fb2a8 (5.00s)",
+      "smoke_test_fixtures_rate_44k_4ab80392 (5.00s)",
+      "smoke_test_fixtures_rate_48k_c5655814 (5.00s)",
+      "smoke_test_fixtures_short_clip_4c2e400d (0.50s)",
+      "smoke_test_fixtures_silence_22a4da1b (30.00s)",
+      "smoke_test_fixtures_stereo_c1d7d1c6 (5.00s)"
+    ],
+    "overall_speech_ratio": 0.0497,
+    "dead_letter_quarantined": 1,
+    "dead_letter_details": [
+      {
+        "item_id": "smoke_test_fixtures_truncated_ecf0bd8e",
+        "stage": "ingest",
+        "reason_code": "DECODE_FAIL",
+        "error_message": "DECODE_FAIL: duration mismatch (header: 2.000s, decoded: 0.001s)",
+        "created_at": "2026-11-19T00:58:13.702407"
+      }
+    ],
+    "total_coverage_pct": 85.41
+  },
+  "metrics": [
+    {
+      "metric": "Stage 1 Ingest Throughput (6w)",
+      "val": 3399.61,
+      "unit": "audio-h / wall-h",
+      "target": 3352.62,
+      "op": ">=",
+      "method": "ProcessPoolExecutor (6w) vs >=3x slowest stage (3352.62)",
+      "status": "PASS"
+    },
+    {
+      "metric": "Stage 1 Ingest Throughput (4w)",
+      "val": 3488.11,
+      "unit": "audio-h / wall-h",
+      "target": 2235.08,
+      "op": ">=",
+      "method": "ProcessPoolExecutor (4 workers)",
+      "status": "PASS"
+    },
+    {
+      "metric": "Stage 1 Ingest Throughput (2w)",
+      "val": 2716.46,
+      "unit": "audio-h / wall-h",
+      "target": 1117.54,
+      "op": ">=",
+      "method": "ProcessPoolExecutor (2 workers)",
+      "status": "PASS"
+    },
+    {
+      "metric": "Stage 1 Ingest Throughput (1w)",
+      "val": 1766.76,
+      "unit": "audio-h / wall-h",
+      "target": 0.0,
+      "op": ">=",
+      "method": "Baseline (1 worker)",
+      "status": "PASS"
+    },
+    {
+      "metric": "Ingest vs Slowest Stage Speedup",
+      "val": 3.04,
+      "unit": "ratio",
+      "target": 3.0,
+      "op": ">=",
+      "method": "Throughput ratio (Ingest 6w / Segment 6w)",
+      "status": "PASS"
+    },
+    {
+      "metric": "Loudness Normalized Sources",
+      "val": 16,
+      "unit": "sources",
+      "target": 18,
+      "op": "==",
+      "method": "DuckDB sources query",
+      "status": "FAIL"
+    },
+    {
+      "metric": "Loudness Undefined Sources",
+      "val": 2,
+      "unit": "sources",
+      "target": 0,
+      "op": "==",
+      "method": "DuckDB sources query",
+      "status": "FAIL"
+    },
+    {
+      "metric": "Ingest Quarantined (Dead Letter)",
+      "val": 1,
+      "unit": "files",
+      "target": 0,
+      "op": "==",
+      "method": "DuckDB dead_letter query",
+      "status": "FAIL"
+    },
+    {
+      "metric": "Total Test Coverage",
+      "val": 85.41,
+      "unit": "%",
+      "target": 85.0,
+      "op": ">=",
+      "method": "pytest-cov JSON report",
+      "status": "PASS"
+    }
+  ]
+}

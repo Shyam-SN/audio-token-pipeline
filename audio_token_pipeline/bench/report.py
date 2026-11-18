@@ -76,7 +76,7 @@ def generate_stage_report(
     stage_name: str,
     config_path: Path | str = "configs/librispeech_dev_clean.yaml",
     reports_dir: Path | str = "reports",
-    ci_url: str = "https://github.com/Shyam-SN/audio-token-pipeline/actions/runs/44389941085",
+    ci_url: str = "https://github.com/Shyam-SN/audio-token-pipeline/actions/runs/44393660532",
 ) -> tuple[Path, Path]:
     """
     Generate both Markdown and JSON verification reports strictly from live data:

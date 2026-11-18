@@ -8,7 +8,7 @@ This report documents verified performance for **stage_2_segment** in the Audio 
 - **Overall Speech Ratio:** 94.73%
 - **Sources with 0 Segments:** 37 file(s)
 - **Segment Multi-Core Speedup (6w vs 1w):** 3.07x
-- **Total Project Test Coverage:** 85.44%
+- **Total Project Test Coverage:** 85.41%
 
 ## 2. Environment
 - **Machine:** arm64
@@ -23,7 +23,7 @@ This report documents verified performance for **stage_2_segment** in the Audio 
 - **Start Time (UTC):** `2026-11-19T01:54:30Z`
 - **End Time (UTC):** `2026-11-19T01:54:46Z`
 - **CI Workflow:** [ci.yml](.github/workflows/ci.yml)
-- **CI Actions Run URL:** [https://github.com/Shyam-SN/audio-token-pipeline/actions/runs/44389941085](https://github.com/Shyam-SN/audio-token-pipeline/actions/runs/44389941085)
+- **CI Actions Run URL:** [https://github.com/Shyam-SN/audio-token-pipeline/actions/runs/44393660532](https://github.com/Shyam-SN/audio-token-pipeline/actions/runs/44393660532)
 
 ## 3. Inputs
 - **Dataset / Split:** `librispeech` / `dev-clean`
@@ -46,7 +46,7 @@ This report documents verified performance for **stage_2_segment** in the Audio 
 | Overall Active Speech Ratio | 89.89 | % | Total retained speech / audio duration | >= 85.0 | **PASS** |
 | Silence Rejection | 0 | segments | Silero VAD on silence.wav | 0 | **PASS** |
 | Short Clip Rejection (<2s) | 0 | segments | Silero VAD on short_clip.wav | 0 | **PASS** |
-| Total Test Coverage | 85.44 | % | pytest-cov JSON report | >= 85.0 | **PASS** |
+| Total Test Coverage | 85.41 | % | pytest-cov JSON report | >= 85.0 | **PASS** |
 
 ## 6. Performance & Multi-Core Scaling
 - **1 Worker:** 363.53 audio-h/h | 48.75 seg/s (Baseline)

@@ -11,7 +11,7 @@
     "git_commit": "f469f8662e698277cf402096edd88190a6809aa7",
     "config_hash": "a848122e7927d37e",
     "ci_workflow": ".github/workflows/ci.yml",
-    "ci_run_url": "https://github.com/Shyam-SN/audio-token-pipeline/actions/runs/44389941085",
+    "ci_run_url": "https://github.com/Shyam-SN/audio-token-pipeline/actions/runs/44393660532",
     "start_time_utc": "2026-11-19T02:02:05Z",
     "end_time_utc": "2026-11-19T02:02:11Z"
   },
@@ -71,7 +71,7 @@
     "overall_speech_ratio": 0.9473,
     "dead_letter_quarantined": 0,
     "dead_letter_details": [],
-    "total_coverage_pct": 85.44
+    "total_coverage_pct": 85.41
   },
   "metrics": [
     {
@@ -148,7 +148,7 @@
     },
     {
       "metric": "Total Test Coverage",
-      "val": 85.44,
+      "val": 85.41,
       "unit": "%",
       "target": 85.0,
       "op": ">=",
