@@ -1,6 +1,6 @@
 {
   "stage": "stage_0_foundation",
-  "run_id": "day1_foundation_a34d8c2",
+  "run_id": "day1_foundation_13478a8",
   "status": "PASS",
   "environment": {
     "machine": "arm64",
@@ -8,12 +8,12 @@
     "python_version": "3.11.16",
     "device_used": "cpu",
     "ram_gb": 16.0,
-    "git_commit": "a34d8c23cfcc567fdd3d22497fc3716526d7cace",
+    "git_commit": "13478a8c7c8799947ebe8a05834c85e9707e190a",
     "config_hash": "4b7934aa04aa16b0",
     "ci_workflow": ".github/workflows/ci.yml",
     "ci_run_url": "https://github.com/Shyam-SN/audio-token-pipeline/actions/workflows/ci.yml",
-    "start_time_utc": "2026-11-18T19:28:14Z",
-    "end_time_utc": "2026-11-18T19:28:14Z"
+    "start_time_utc": "2026-11-18T19:28:37Z",
+    "end_time_utc": "2026-11-18T19:28:37Z"
   },
   "inputs": {
     "dataset": "smoke_test",

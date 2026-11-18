@@ -1,4 +1,4 @@
-# Stage Report: stage_0_foundation (day1_foundation_a34d8c2)
+# Stage Report: stage_0_foundation (day1_foundation_13478a8)
 
 ## 1. Summary
 This report verifies the foundation, catalogue, integrity verification, and downloader modules of the Audio Token Pipeline (`atp`). Every file is fully decoded chunk-by-chunk using PyAV and SoundFile; decoded sample counts are checked against header metadata. Mismatched or truncated files are automatically quarantined into `dead_letter`. All values in this report are dynamically queried from `catalog.duckdb`, `reports/coverage.json`, and git metadata.
@@ -13,11 +13,11 @@ This report verifies the foundation, catalogue, integrity verification, and down
 - **RAM:** 16.0 GB
 - **Python Version:** 3.11.16
 - **Device Used:** cpu
-- **Git Commit:** `a34d8c23cfcc567fdd3d22497fc3716526d7cace`
+- **Git Commit:** `13478a8c7c8799947ebe8a05834c85e9707e190a`
 - **Config Hash:** `4b7934aa04aa16b0`
-- **Run ID:** `day1_foundation_a34d8c2`
-- **Start Time (UTC):** `2026-11-18T19:28:14Z`
-- **End Time (UTC):** `2026-11-18T19:28:14Z`
+- **Run ID:** `day1_foundation_13478a8`
+- **Start Time (UTC):** `2026-11-18T19:28:37Z`
+- **End Time (UTC):** `2026-11-18T19:28:37Z`
 - **CI Workflow:** [ci.yml](.github/workflows/ci.yml)
 - **CI Actions Run URL:** [https://github.com/Shyam-SN/audio-token-pipeline/actions/workflows/ci.yml](https://github.com/Shyam-SN/audio-token-pipeline/actions/workflows/ci.yml)
 
