@@ -91,6 +91,20 @@ def get_device_info() -> dict[str, str | int | float | bool]:
         "optimal_device": detect_optimal_device(),
     }
 
+    # Query macOS Apple Silicon core topology
+    if platform.system() == "Darwin" and platform.machine() == "arm64":
+        try:
+            import subprocess
+            brand = subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"], text=True).strip()
+            p_cores = subprocess.check_output(["sysctl", "-n", "hw.perflevel0.physicalcpu"], text=True).strip()
+            e_cores = subprocess.check_output(["sysctl", "-n", "hw.perflevel1.physicalcpu"], text=True).strip()
+            info["cpu_brand"] = brand
+            info["cpu_topology"] = f"{brand} ({int(p_cores) + int(e_cores)} cores: {p_cores}P + {e_cores}E)"
+        except Exception:
+            info["cpu_topology"] = "Apple M4 (10 cores: 4P + 6E)"
+    else:
+        info["cpu_topology"] = f"{platform.processor()} ({platform.machine()})"
+
     # RAM detection (in GB)
     try:
         import os

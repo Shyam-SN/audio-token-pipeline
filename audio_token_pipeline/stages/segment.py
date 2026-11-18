@@ -190,7 +190,21 @@ def segment_audio_file(
             st = split_point
         final_regions.append({"start": st, "end": en})
 
-    # Drop only pieces under 2s (min_speech_duration_s)
+    # Expand sub-2.0s speech regions using available surrounding context up to min_speech_duration_s (2.0s)
+    # This ensures any source file with >= 2.0s total audio retains its speech utterance
+    for reg in final_regions:
+        dur_samples = reg["end"] - reg["start"]
+        if dur_samples < min_samples and audio_len >= min_samples:
+            deficit = min_samples - dur_samples
+            pad_left = min(reg["start"], deficit // 2)
+            pad_right = min(audio_len - reg["end"], deficit - pad_left)
+            if (pad_left + pad_right) < deficit:
+                extra_left = min(reg["start"] - pad_left, deficit - (pad_left + pad_right))
+                pad_left += extra_left
+            reg["start"] -= pad_left
+            reg["end"] += pad_right
+
+    # Drop only pieces strictly under 2s (min_speech_duration_s)
     segments = []
     seg_idx = 0
     for reg in final_regions:

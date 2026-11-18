@@ -89,12 +89,21 @@ def compute_audio_loudness_metadata(
         )
 
     duration_s = float(len(audio)) / float(sr)
-    peak_val = float(np.max(np.abs(audio))) if len(audio) > 0 else 0.0
-    orig_peak_db = 20.0 * math.log10(max(peak_val, 1e-9))
+    # ITU-R BS.1770 4x oversampled true peak calculation
+    try:
+        import torchaudio.functional as F
+        t_audio = torch.from_numpy(audio.T).float()
+        oversampled = F.resample(t_audio, sr, sr * 4)
+        true_peak_val = float(oversampled.abs().max().item()) if oversampled.numel() > 0 else 0.0
+    except Exception:
+        true_peak_val = float(np.max(np.abs(audio))) if len(audio) > 0 else 0.0
+
+    orig_peak_db = 20.0 * math.log10(max(true_peak_val, 1e-9))
+    sample_peak_val = float(np.max(np.abs(audio))) if len(audio) > 0 else 0.0
 
     # Condition: Silent files (peak < 1e-4) or files under 400ms (< 0.4s)
     # Skip gain and flag LOUDNESS_UNDEFINED instead of quarantining
-    if duration_s < 0.4 or peak_val < 1e-4:
+    if duration_s < 0.4 or sample_peak_val < 1e-4:
         return IngestResult(
             source_id=source_id,
             duration_s=round(duration_s, 4),

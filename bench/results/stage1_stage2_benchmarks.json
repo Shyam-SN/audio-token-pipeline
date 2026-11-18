@@ -1,45 +1,49 @@
 {
   "dataset": "librispeech",
   "split": "dev-clean",
-  "timestamp_utc": "2026-11-18T20:10:19Z",
+  "timestamp_utc": "2026-11-18T20:27:06Z",
   "stage_1_ingest": {
     "1_worker": {
       "items_in": 2703,
       "items_out": 2703,
-      "total_audio_seconds": 19396.121,
-      "elapsed_seconds": 8.132,
-      "throughput_audio_hours_per_wall_hour": 2385.21,
+      "total_audio_seconds": 193961.21,
+      "elapsed_seconds": 109.783,
+      "throughput_audio_hours_per_wall_hour": 1766.76,
       "workers": 1,
+      "passes": 10,
       "speedup_vs_1w": 1.0
     },
     "2_workers": {
       "items_in": 2703,
       "items_out": 2703,
-      "total_audio_seconds": 19396.121,
-      "elapsed_seconds": 5.356,
-      "throughput_audio_hours_per_wall_hour": 3621.7,
+      "total_audio_seconds": 193961.21,
+      "elapsed_seconds": 71.402,
+      "throughput_audio_hours_per_wall_hour": 2716.46,
       "workers": 2,
-      "speedup_vs_1w": 1.52
+      "passes": 10,
+      "speedup_vs_1w": 1.54
     },
     "4_workers": {
       "items_in": 2703,
       "items_out": 2703,
-      "total_audio_seconds": 19396.121,
-      "elapsed_seconds": 4.003,
-      "throughput_audio_hours_per_wall_hour": 4845.87,
+      "total_audio_seconds": 213357.331,
+      "elapsed_seconds": 61.167,
+      "throughput_audio_hours_per_wall_hour": 3488.11,
       "workers": 4,
-      "speedup_vs_1w": 2.03
+      "passes": 11,
+      "speedup_vs_1w": 1.97
     },
     "6_workers": {
       "items_in": 2703,
       "items_out": 2703,
-      "total_audio_seconds": 19396.121,
-      "elapsed_seconds": 4.257,
-      "throughput_audio_hours_per_wall_hour": 4556.78,
+      "total_audio_seconds": 213357.331,
+      "elapsed_seconds": 62.759,
+      "throughput_audio_hours_per_wall_hour": 3399.61,
       "workers": 6,
-      "speedup_vs_1w": 1.91
+      "passes": 11,
+      "speedup_vs_1w": 1.92
     },
-    "speedup_6w_vs_1w": 1.91
+    "speedup_6w_vs_1w": 1.92
   },
   "stage_2_segment": {
     "1_worker": {
