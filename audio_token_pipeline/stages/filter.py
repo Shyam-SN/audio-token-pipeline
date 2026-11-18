@@ -34,6 +34,7 @@ class FilterResult:
     reason_codes: list[str]
     exact_hash: str = ""
     near_duplicate_hash: str = ""
+    music_score: float = 0.0
     error: str | None = None
 
 
@@ -69,13 +70,10 @@ def compute_spectral_fingerprint(
     scale = float(np.max(spec)) + 1e-9
     spec = np.log1p(10.0 * spec / scale)
 
-    # Modulation spectrum: FFT along time dimension for each subband
-    # Magnitude of temporal FFT is mathematically shift-invariant: |F(x(t - tau))| = |F(x(t))|
-    mod_spec = np.abs(np.fft.rfft(spec, axis=0))
-    if len(mod_spec) > num_mod:
-        mod_features = mod_spec[1 : num_mod + 1, :]  # Exclude DC offset (bin 0)
-    else:
-        mod_features = np.pad(mod_spec[1:], ((0, max(0, num_mod - len(mod_spec) + 1)), (0, 0)))
+    # Modulation spectrum: Fixed-length FFT along time dimension for each subband
+    # Magnitude of temporal FFT is shift-invariant, and fixed n=512 standardizes bin spacing
+    mod_spec = np.abs(np.fft.rfft(spec, n=512, axis=0))
+    mod_features = mod_spec[1 : num_mod + 1, :]  # Exclude DC offset (bin 0)
 
     vec = mod_features.flatten().astype(np.float32)
     norm = float(np.linalg.norm(vec)) + 1e-9
@@ -231,12 +229,12 @@ def check_silence_ratio(
 def estimate_wada_snr(
     audio: np.ndarray,
     sr: int = 24000,
-    min_snr_db: float = 10.0,
-    speech_crest_factor_offset_db: float = 5.5,
+    min_snr_db: float = 18.0,
 ) -> tuple[bool, float]:
     """
     Robust energy distribution SNR estimation (upper 90th percentile speech vs 10th percentile noise floor).
-    Calibrated with empirical speech crest factor offset (5.5 dB) to align estimated SNR with physical SNR.
+    Computes raw frame-energy percentile difference.
+    A raw threshold of 18.0 dB corresponds to true physical SNR >= 13.5 dB (clean speech >= 15 dB).
     """
     if len(audio) == 0:
         return False, 0.0
@@ -254,11 +252,72 @@ def estimate_wada_snr(
 
     noise_floor_db = float(np.percentile(frame_dbs, 10))
     speech_peak_db = float(np.percentile(frame_dbs, 90))
-    raw_dynamic_range = max(0.0, speech_peak_db - noise_floor_db)
-    # Calibrate: Subtract syllabic peak crest offset to estimate mean physical speech SNR
-    snr_db = max(0.0, raw_dynamic_range - speech_crest_factor_offset_db)
+    snr_db = max(0.0, speech_peak_db - noise_floor_db)
     passed = snr_db >= min_snr_db
     return passed, snr_db
+
+
+def detect_music_presence(
+    audio: np.ndarray,
+    sr: int = 24000,
+    music_threshold: float = 0.50,
+) -> tuple[bool, float]:
+    """
+    Detect music presence in audio using acoustic feature tagger.
+    Flags background music (chords, sustained tonal instruments) even when speech is present.
+    """
+    if len(audio) < 2048:
+        return False, 0.0
+
+    n_fft = 2048
+    hop = 1024
+    num_frames = (len(audio) - n_fft) // hop + 1
+    if num_frames < 6:
+        return False, 0.0
+
+    window = np.hanning(n_fft)
+    freqs = np.fft.rfftfreq(n_fft, 1.0 / sr)
+    valid_idx = np.where((freqs >= 120.0) & (freqs <= 3500.0))[0]
+
+    midi = 69.0 + 12.0 * np.log2(np.maximum(freqs[valid_idx], 1e-4) / 440.0)
+    chroma_bins = np.mod(np.round(midi).astype(int), 12)
+
+    chroma = np.zeros((num_frames, 12), dtype=np.float32)
+    fluxes = []
+    prev_mag = None
+
+    for i in range(num_frames):
+        chunk = audio[i * hop : i * hop + n_fft] * window
+        mag = np.abs(np.fft.rfft(chunk))[valid_idx]
+        mag_norm = mag / (np.linalg.norm(mag) + 1e-9)
+        if prev_mag is not None:
+            flux = float(np.sum((mag_norm - prev_mag) ** 2))
+            fluxes.append(flux)
+        prev_mag = mag_norm
+
+        for c in range(12):
+            chroma[i, c] = float(np.sum(mag[chroma_bins == c]))
+
+    norms = np.linalg.norm(chroma, axis=1, keepdims=True) + 1e-9
+    normed = chroma / norms
+
+    mean_flux = float(np.mean(fluxes)) if fluxes else 1.0
+    k = min(4, num_frames - 2)
+    corrs = np.sum(normed[:-k] * normed[k:], axis=1)
+    mean_corr = float(np.mean(corrs))
+    poly = float(np.mean(np.sum(normed > 0.32, axis=1) >= 3))
+
+    # Case 1: Pure tonal music / chords (nearly zero spectral flux, high polyphony & correlation)
+    if mean_flux < 0.20:
+        score = float(np.clip(1.0 - mean_flux, 0.0, 1.0))
+    # Case 2: Speech over sustained background music / chords (suppressed flux, elevated polyphony & sustained correlation)
+    elif mean_flux < 0.55 and poly >= 0.75 and mean_corr >= 0.80:
+        score = float(np.clip((0.60 - mean_flux) * 4.0 + (mean_corr - 0.78) * 2.0, 0.0, 1.0))
+    else:
+        score = 0.0
+
+    is_present = score >= music_threshold
+    return is_present, score
 
 
 def evaluate_segment_item(
@@ -415,7 +474,30 @@ def evaluate_segment_item(
                 reason_codes=reasons,
             )
 
-    # 7. DUPLICATE Check (Exact Hash + Near Duplicate Spectral Hash)
+    # 7. MUSIC_PRESENT Check (Audio tagger: speech over music flagged, not passed)
+    music_score = 0.0
+    if cfg.enable_music_detector:
+        music_present, music_score = detect_music_presence(
+            audio, sr=sr, music_threshold=cfg.max_music_score
+        )
+        if music_present:
+            reasons.append("MUSIC_PRESENT")
+            overall_passed = False
+            if not eval_mode:
+                return FilterResult(
+                    segment_id=segment_id,
+                    passed=False,
+                    silence_ratio=round(silence_ratio, 4),
+                    clip_fraction=round(clip_fraction, 5),
+                    snr_db=round(snr_db, 2),
+                    dc_offset=round(dc_offset, 5),
+                    speech_prob=speech_prob,
+                    duration_s=duration_s,
+                    reason_codes=reasons,
+                    music_score=round(music_score, 4),
+                )
+
+    # 8. DUPLICATE Check (Exact Hash + Near Duplicate Spectral Hash)
     pcm_bytes = (np.clip(audio, -1.0, 1.0) * 32767).astype(np.int16).tobytes()
     exact_hash = hashlib.sha256(pcm_bytes).hexdigest()[:16]
     near_fingerprint = compute_spectral_fingerprint(audio, sr=sr, num_bands=16)
@@ -451,6 +533,7 @@ def evaluate_segment_item(
         reason_codes=reasons,
         exact_hash=exact_hash,
         near_duplicate_hash=near_hash_str,
+        music_score=round(music_score, 4),
     )
 
 

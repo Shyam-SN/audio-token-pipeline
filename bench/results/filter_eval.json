@@ -10,200 +10,218 @@
   "noise_snr_levels": {
     "0_db_snr": {
       "target_snr_db": 0.0,
+      "distinct_clips_tested": 25,
       "samples_tested": 75,
       "rejections": 75,
       "rejection_rate_pct": 100.0,
       "white_stats": {
-        "mean": 0.01,
-        "std": 0.02,
+        "mean": 5.69,
+        "std": 0.47,
         "rejection_rate_pct": 100.0
       },
       "pink_stats": {
-        "mean": 0.45,
-        "std": 0.63,
+        "mean": 6.26,
+        "std": 0.93,
         "rejection_rate_pct": 100.0
       },
       "babble_stats": {
-        "mean": 1.65,
-        "std": 0.65,
+        "mean": 7.77,
+        "std": 0.98,
         "rejection_rate_pct": 100.0
       },
+      "ground_truth_label": "BAD_FAULT",
       "expected_rejection": "HIGH"
     },
     "5_db_snr": {
       "target_snr_db": 5.0,
+      "distinct_clips_tested": 25,
       "samples_tested": 75,
       "rejections": 75,
       "rejection_rate_pct": 100.0,
       "white_stats": {
-        "mean": 3.82,
-        "std": 0.07,
+        "mean": 9.72,
+        "std": 0.59,
         "rejection_rate_pct": 100.0
       },
       "pink_stats": {
-        "mean": 4.42,
-        "std": 0.69,
+        "mean": 10.32,
+        "std": 1.17,
         "rejection_rate_pct": 100.0
       },
       "babble_stats": {
-        "mean": 4.87,
-        "std": 0.76,
+        "mean": 10.97,
+        "std": 1.1,
         "rejection_rate_pct": 100.0
       },
+      "ground_truth_label": "BAD_FAULT",
       "expected_rejection": "HIGH"
     },
     "6_db_snr": {
       "target_snr_db": 6.0,
+      "distinct_clips_tested": 25,
       "samples_tested": 75,
       "rejections": 75,
       "rejection_rate_pct": 100.0,
       "white_stats": {
-        "mean": 4.67,
-        "std": 0.08,
+        "mean": 10.56,
+        "std": 0.64,
         "rejection_rate_pct": 100.0
       },
       "pink_stats": {
-        "mean": 5.13,
-        "std": 0.53,
+        "mean": 11.4,
+        "std": 1.42,
         "rejection_rate_pct": 100.0
       },
       "babble_stats": {
-        "mean": 5.52,
-        "std": 0.9,
+        "mean": 11.7,
+        "std": 1.4,
         "rejection_rate_pct": 100.0
       },
+      "ground_truth_label": "BAD_FAULT",
       "expected_rejection": "HIGH"
     },
     "8_db_snr": {
       "target_snr_db": 8.0,
+      "distinct_clips_tested": 25,
       "samples_tested": 75,
       "rejections": 75,
       "rejection_rate_pct": 100.0,
       "white_stats": {
-        "mean": 6.46,
-        "std": 0.07,
+        "mean": 12.45,
+        "std": 0.64,
         "rejection_rate_pct": 100.0
       },
       "pink_stats": {
-        "mean": 6.7,
-        "std": 0.44,
+        "mean": 12.68,
+        "std": 0.93,
         "rejection_rate_pct": 100.0
       },
       "babble_stats": {
-        "mean": 6.86,
-        "std": 0.54,
+        "mean": 13.1,
+        "std": 1.17,
         "rejection_rate_pct": 100.0
       },
+      "ground_truth_label": "BAD_FAULT",
       "expected_rejection": "HIGH"
     },
     "10_db_snr": {
       "target_snr_db": 10.0,
+      "distinct_clips_tested": 25,
       "samples_tested": 75,
       "rejections": 75,
       "rejection_rate_pct": 100.0,
       "white_stats": {
-        "mean": 8.32,
-        "std": 0.07,
+        "mean": 14.29,
+        "std": 0.68,
         "rejection_rate_pct": 100.0
       },
       "pink_stats": {
-        "mean": 8.45,
-        "std": 0.31,
+        "mean": 14.64,
+        "std": 1.02,
         "rejection_rate_pct": 100.0
       },
       "babble_stats": {
-        "mean": 8.47,
-        "std": 0.6,
+        "mean": 15.22,
+        "std": 1.26,
         "rejection_rate_pct": 100.0
       },
+      "ground_truth_label": "GOOD_ACCEPTABLE",
       "expected_rejection": "LOW"
     },
     "12_db_snr": {
       "target_snr_db": 12.0,
+      "distinct_clips_tested": 25,
       "samples_tested": 75,
-      "rejections": 19,
-      "rejection_rate_pct": 25.33,
+      "rejections": 69,
+      "rejection_rate_pct": 92.0,
       "white_stats": {
-        "mean": 10.12,
-        "std": 0.09,
-        "rejection_rate_pct": 8.0
+        "mean": 16.14,
+        "std": 0.7,
+        "rejection_rate_pct": 100.0
       },
       "pink_stats": {
-        "mean": 10.21,
-        "std": 0.4,
-        "rejection_rate_pct": 20.0
+        "mean": 16.58,
+        "std": 1.38,
+        "rejection_rate_pct": 88.0
       },
       "babble_stats": {
-        "mean": 10.0,
-        "std": 0.67,
-        "rejection_rate_pct": 48.0
+        "mean": 16.66,
+        "std": 1.29,
+        "rejection_rate_pct": 88.0
       },
+      "ground_truth_label": "GOOD_ACCEPTABLE",
       "expected_rejection": "LOW"
     },
     "15_db_snr": {
       "target_snr_db": 15.0,
+      "distinct_clips_tested": 25,
       "samples_tested": 75,
-      "rejections": 0,
-      "rejection_rate_pct": 0.0,
+      "rejections": 8,
+      "rejection_rate_pct": 10.67,
       "white_stats": {
-        "mean": 12.93,
-        "std": 0.1,
-        "rejection_rate_pct": 0.0
+        "mean": 19.01,
+        "std": 0.77,
+        "rejection_rate_pct": 8.0
       },
       "pink_stats": {
-        "mean": 12.82,
-        "std": 0.41,
-        "rejection_rate_pct": 0.0
+        "mean": 19.01,
+        "std": 1.14,
+        "rejection_rate_pct": 12.0
       },
       "babble_stats": {
-        "mean": 12.46,
-        "std": 0.55,
-        "rejection_rate_pct": 0.0
+        "mean": 19.28,
+        "std": 1.45,
+        "rejection_rate_pct": 12.0
       },
+      "ground_truth_label": "GOOD_ACCEPTABLE",
       "expected_rejection": "LOW"
     },
     "20_db_snr": {
       "target_snr_db": 20.0,
+      "distinct_clips_tested": 25,
       "samples_tested": 75,
       "rejections": 0,
       "rejection_rate_pct": 0.0,
       "white_stats": {
-        "mean": 17.06,
-        "std": 0.13,
+        "mean": 23.52,
+        "std": 1.11,
         "rejection_rate_pct": 0.0
       },
       "pink_stats": {
-        "mean": 16.83,
-        "std": 0.39,
+        "mean": 23.61,
+        "std": 1.68,
         "rejection_rate_pct": 0.0
       },
       "babble_stats": {
-        "mean": 16.72,
-        "std": 0.48,
+        "mean": 23.74,
+        "std": 1.66,
         "rejection_rate_pct": 0.0
       },
+      "ground_truth_label": "GOOD_ACCEPTABLE",
       "expected_rejection": "LOW"
     },
     "30_db_snr": {
       "target_snr_db": 30.0,
+      "distinct_clips_tested": 25,
       "samples_tested": 75,
       "rejections": 0,
       "rejection_rate_pct": 0.0,
       "white_stats": {
-        "mean": 21.35,
-        "std": 0.07,
+        "mean": 30.64,
+        "std": 3.22,
         "rejection_rate_pct": 0.0
       },
       "pink_stats": {
-        "mean": 21.39,
-        "std": 0.13,
+        "mean": 30.83,
+        "std": 3.29,
         "rejection_rate_pct": 0.0
       },
       "babble_stats": {
-        "mean": 21.44,
-        "std": 0.25,
+        "mean": 30.47,
+        "std": 3.24,
         "rejection_rate_pct": 0.0
       },
+      "ground_truth_label": "GOOD_ACCEPTABLE",
       "expected_rejection": "LOW"
     }
   },
@@ -238,8 +256,8 @@
     "25_pct_silence": {
       "silence_ratio": 0.25,
       "samples_tested": 25,
-      "rejections": 0,
-      "rejection_rate_pct": 0.0,
+      "rejections": 7,
+      "rejection_rate_pct": 28.0,
       "expected_rejection": "NO"
     },
     "50_pct_silence": {
@@ -293,12 +311,12 @@
     "exact_recall_pct": 100.0,
     "near_shift_50ms_recall_pct": 100.0,
     "near_shift_100ms_recall_pct": 100.0,
-    "near_shift_200ms_recall_pct": 100.0,
+    "near_shift_200ms_recall_pct": 92.0,
     "near_mp3_64k_recall_pct": 100.0,
     "near_pitch_1pct_recall_pct": 100.0,
     "near_duplicates_injected": 125,
-    "near_duplicates_detected": 125,
-    "near_recall_pct": 100.0
+    "near_duplicates_detected": 123,
+    "near_recall_pct": 98.4
   },
   "not_speech_evaluation": {
     "pure_music_segments": 0,
@@ -306,28 +324,28 @@
     "pure_music_status": "REJECTED",
     "speech_under_music": {
       "5_db_snr": {
-        "segments_created": 1,
-        "speech_ratio": 0.949,
-        "speech_prob": 0.911,
-        "retained": true
+        "music_detected": true,
+        "music_score": 0.5634152946368289,
+        "status": "FLAGGED_AS_MUSIC_PRESENT",
+        "action": "Flagged and discarded from training tokens"
       },
       "10_db_snr": {
-        "segments_created": 1,
-        "speech_ratio": 0.954,
-        "speech_prob": 0.915,
-        "retained": true
+        "music_detected": false,
+        "music_score": 0.0,
+        "status": "NOT_FLAGGED",
+        "action": "Flagged and discarded from training tokens"
       },
       "15_db_snr": {
-        "segments_created": 1,
-        "speech_ratio": 0.959,
-        "speech_prob": 0.915,
-        "retained": true
+        "music_detected": false,
+        "music_score": 0.0,
+        "status": "NOT_FLAGGED",
+        "action": "Flagged and discarded from training tokens"
       },
       "20_db_snr": {
-        "segments_created": 1,
-        "speech_ratio": 0.959,
-        "speech_prob": 0.919,
-        "retained": true
+        "music_detected": false,
+        "music_score": 0.0,
+        "status": "NOT_FLAGGED",
+        "action": "Flagged and discarded from training tokens"
       }
     },
     "low_speech_prob_faults_injected": 100,
@@ -383,10 +401,10 @@
       "filter": "DUPLICATE",
       "fault_type": "Exact PCM & Time-Shift/MP3/Pitch Near-Duplicates",
       "injected": 150,
-      "detected": 150,
+      "detected": 148,
       "precision_pct": 100.0,
-      "recall_pct": 100.0,
-      "f1_score": 1.0,
+      "recall_pct": 98.67,
+      "f1_score": 0.9933,
       "target_recall": 95.0,
       "status": "PASS"
     },
@@ -405,151 +423,162 @@
   "snr_noise_types_stats": {
     "white": {
       "0_db": {
-        "mean": 0.01,
-        "std": 0.02,
+        "mean": 5.69,
+        "std": 0.47,
         "rejection_rate_pct": 100.0
       },
       "5_db": {
-        "mean": 3.82,
-        "std": 0.07,
+        "mean": 9.72,
+        "std": 0.59,
         "rejection_rate_pct": 100.0
       },
       "6_db": {
-        "mean": 4.67,
-        "std": 0.08,
+        "mean": 10.56,
+        "std": 0.64,
         "rejection_rate_pct": 100.0
       },
       "8_db": {
-        "mean": 6.46,
-        "std": 0.07,
+        "mean": 12.45,
+        "std": 0.64,
         "rejection_rate_pct": 100.0
       },
       "10_db": {
-        "mean": 8.32,
-        "std": 0.07,
+        "mean": 14.29,
+        "std": 0.68,
         "rejection_rate_pct": 100.0
       },
       "12_db": {
-        "mean": 10.12,
-        "std": 0.09,
-        "rejection_rate_pct": 8.0
+        "mean": 16.14,
+        "std": 0.7,
+        "rejection_rate_pct": 100.0
       },
       "15_db": {
-        "mean": 12.93,
-        "std": 0.1,
-        "rejection_rate_pct": 0.0
+        "mean": 19.01,
+        "std": 0.77,
+        "rejection_rate_pct": 8.0
       },
       "20_db": {
-        "mean": 17.06,
-        "std": 0.13,
+        "mean": 23.52,
+        "std": 1.11,
         "rejection_rate_pct": 0.0
       },
       "30_db": {
-        "mean": 21.35,
-        "std": 0.07,
+        "mean": 30.64,
+        "std": 3.22,
         "rejection_rate_pct": 0.0
       }
     },
     "pink": {
       "0_db": {
-        "mean": 0.45,
-        "std": 0.63,
+        "mean": 6.26,
+        "std": 0.93,
         "rejection_rate_pct": 100.0
       },
       "5_db": {
-        "mean": 4.42,
-        "std": 0.69,
+        "mean": 10.32,
+        "std": 1.17,
         "rejection_rate_pct": 100.0
       },
       "6_db": {
-        "mean": 5.13,
-        "std": 0.53,
+        "mean": 11.4,
+        "std": 1.42,
         "rejection_rate_pct": 100.0
       },
       "8_db": {
-        "mean": 6.7,
-        "std": 0.44,
+        "mean": 12.68,
+        "std": 0.93,
         "rejection_rate_pct": 100.0
       },
       "10_db": {
-        "mean": 8.45,
-        "std": 0.31,
+        "mean": 14.64,
+        "std": 1.02,
         "rejection_rate_pct": 100.0
       },
       "12_db": {
-        "mean": 10.21,
-        "std": 0.4,
-        "rejection_rate_pct": 20.0
+        "mean": 16.58,
+        "std": 1.38,
+        "rejection_rate_pct": 88.0
       },
       "15_db": {
-        "mean": 12.82,
-        "std": 0.41,
-        "rejection_rate_pct": 0.0
+        "mean": 19.01,
+        "std": 1.14,
+        "rejection_rate_pct": 12.0
       },
       "20_db": {
-        "mean": 16.83,
-        "std": 0.39,
+        "mean": 23.61,
+        "std": 1.68,
         "rejection_rate_pct": 0.0
       },
       "30_db": {
-        "mean": 21.39,
-        "std": 0.13,
+        "mean": 30.83,
+        "std": 3.29,
         "rejection_rate_pct": 0.0
       }
     },
     "babble": {
       "0_db": {
-        "mean": 1.65,
-        "std": 0.65,
+        "mean": 7.77,
+        "std": 0.98,
         "rejection_rate_pct": 100.0
       },
       "5_db": {
-        "mean": 4.87,
-        "std": 0.76,
+        "mean": 10.97,
+        "std": 1.1,
         "rejection_rate_pct": 100.0
       },
       "6_db": {
-        "mean": 5.52,
-        "std": 0.9,
+        "mean": 11.7,
+        "std": 1.4,
         "rejection_rate_pct": 100.0
       },
       "8_db": {
-        "mean": 6.86,
-        "std": 0.54,
+        "mean": 13.1,
+        "std": 1.17,
         "rejection_rate_pct": 100.0
       },
       "10_db": {
-        "mean": 8.47,
-        "std": 0.6,
+        "mean": 15.22,
+        "std": 1.26,
         "rejection_rate_pct": 100.0
       },
       "12_db": {
-        "mean": 10.0,
-        "std": 0.67,
-        "rejection_rate_pct": 48.0
+        "mean": 16.66,
+        "std": 1.29,
+        "rejection_rate_pct": 88.0
       },
       "15_db": {
-        "mean": 12.46,
-        "std": 0.55,
-        "rejection_rate_pct": 0.0
+        "mean": 19.28,
+        "std": 1.45,
+        "rejection_rate_pct": 12.0
       },
       "20_db": {
-        "mean": 16.72,
-        "std": 0.48,
+        "mean": 23.74,
+        "std": 1.66,
         "rejection_rate_pct": 0.0
       },
       "30_db": {
-        "mean": 21.44,
-        "std": 0.25,
+        "mean": 30.47,
+        "std": 3.24,
         "rejection_rate_pct": 0.0
       }
     }
   },
   "snr_calibration": {
-    "empirical_speech_crest_offset_db": 5.5,
-    "calibrated_formula": "SNR_calibrated = SNR_estimated - 5.5 dB",
-    "decision_boundary_db": 10.0,
-    "effective_raw_threshold_db": 15.5,
-    "description": "Accounts for speech pause and syllabic peak crest factors relative to noise floor."
+    "ground_truth_bad_levels_db": [
+      0.0,
+      5.0,
+      6.0,
+      8.0
+    ],
+    "ground_truth_good_levels_db": [
+      10.0,
+      12.0,
+      15.0,
+      20.0,
+      30.0
+    ],
+    "chosen_raw_threshold_db": 18.0,
+    "true_snr_rule": "Corresponds to true physical SNR >= 13.5 dB (clean speech >= 15 dB)",
+    "num_distinct_clips_evaluated": 25
   }
 }

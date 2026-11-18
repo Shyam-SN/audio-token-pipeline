@@ -63,15 +63,15 @@ def test_filter_silence_threshold() -> None:
 
 def test_filter_snr_threshold() -> None:
     clean = generate_synthetic_clean_speech(duration_s=2.5)
-    passed_clean, snr_clean = estimate_wada_snr(clean, min_snr_db=10.0)
+    passed_clean, snr_clean = estimate_wada_snr(clean, min_snr_db=18.0)
     assert passed_clean is True
-    assert snr_clean >= 10.0
+    assert snr_clean >= 18.0
 
     # 0 dB noise
     noisy = inject_noise_at_snr(clean, target_snr_db=0.0)
-    passed_noisy, snr_noisy = estimate_wada_snr(noisy, min_snr_db=10.0)
+    passed_noisy, snr_noisy = estimate_wada_snr(noisy, min_snr_db=18.0)
     assert passed_noisy is False
-    assert snr_noisy < 10.0
+    assert snr_noisy < 18.0
 
 
 def test_filter_duplicate_detection() -> None:

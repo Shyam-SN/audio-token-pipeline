@@ -60,12 +60,14 @@ class FilterConfig(BaseModel):
     max_silence_ratio: float = 0.40
     max_clip_fraction: float = 0.001
     clip_threshold: float = 0.999
-    min_snr_db: float = 10.0
+    min_snr_db: float = 18.0
     max_dc_offset: float = 0.01
     min_duration_s: float = 2.0
     max_duration_s: float = 30.0
-    duplicate_similarity_threshold: float = 0.95
+    duplicate_similarity_threshold: float = 0.98
     min_speech_prob: float = 0.60
+    enable_music_detector: bool = True
+    max_music_score: float = 0.50
     whisper_expected_lang: str | None = None
 
 
