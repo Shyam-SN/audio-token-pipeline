@@ -14,6 +14,7 @@ import pyarrow.parquet as pq
 import soundfile as sf
 
 from audio_token_pipeline.catalog import Catalog
+from audio_token_pipeline.io.decode import decode_and_verify_audio
 
 logger = logging.getLogger(__name__)
 
@@ -151,12 +152,23 @@ def build_manifest_parquet(
         if total_seconds >= max_seconds:
             break
 
-        meta = scan_audio_metadata(fpath)
         sha = compute_file_sha256(fpath)
-        duration = float(meta["duration_s"]) if meta["duration_s"] is not None else 0.0
-
         rel_path = str(fpath.relative_to(audio_dir))
         source_id = f"{dataset_name}_{split_name}_{fpath.stem}_{sha[:8]}"
+
+        # Fully decode and verify stream vs header
+        is_valid, meta, err = decode_and_verify_audio(fpath)
+        if not is_valid:
+            if catalog:
+                catalog.record_dead_letter(
+                    item_id=source_id,
+                    stage="ingest",
+                    reason_code="DECODE_FAIL",
+                    error_message=err or "Decode failed or duration mismatch",
+                )
+            continue
+
+        duration = float(meta["duration_s"])
 
         record = {
             "source_id": source_id,
@@ -181,8 +193,8 @@ def build_manifest_parquet(
                 dataset=dataset_name,
                 split=split_name,
                 duration_s=duration,
-                sample_rate=meta["sample_rate"],  # type: ignore[arg-type]
-                channels=meta["channels"],  # type: ignore[arg-type]
+                sample_rate=meta["sample_rate"],
+                channels=meta["channels"],
                 sha256=sha,
                 status="PENDING",
             )

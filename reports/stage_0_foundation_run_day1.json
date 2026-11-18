@@ -1,6 +1,6 @@
 {
   "stage": "stage_0_foundation",
-  "run_id": "day1_foundation_rev2",
+  "run_id": "day1_foundation_rev3",
   "status": "PASS",
   "environment": {
     "machine": "MacBook Air",
@@ -13,31 +13,63 @@
     "torch_version": "2.15.0",
     "duckdb_version": "2.0.0",
     "device_used": "cpu",
-    "git_commit": "fe12e10",
-    "config_hash": "62bf143a537fbdcb"
+    "git_commit": "028a2ec",
+    "config_hash": "62bf143a537fbdcb",
+    "ci_workflow_path": ".github/workflows/ci.yml",
+    "ci_run_url": "https://github.com/audio-token-pipeline/audio-token-pipeline/actions/workflows/ci.yml",
+    "start_time_utc": "2026-11-18T18:58:30Z",
+    "end_time_utc": "2026-11-18T19:25:00Z"
   },
   "inputs": {
     "dataset": "extended_smoke_fixtures",
     "split": "fixtures",
-    "num_files": 19,
-    "total_duration_s": 358.7,
-    "total_audio_hours": 0.0996,
-    "fixture_breakdown": {
-      "standard_conditions": ["clean_formant.wav", "silence.wav", "clipped.wav", "dc_offset.wav", "noisy_5db.wav", "music_chord.wav", "short_clip.wav", "extended_speech.wav"],
-      "sample_rates": ["rate_16k.wav", "rate_44k.wav", "rate_48k.wav"],
-      "channels": ["stereo.wav"],
-      "formats": ["format_speech.flac", "format_speech.mp3", "format_speech.opus"],
-      "faulty": ["truncated.wav"],
-      "real_librispeech_dev_clean": ["librispeech_1272-128104-0000.flac", "librispeech_1272-128104-0001.flac", "librispeech_1272-128104-0002.flac"]
-    }
+    "num_files_total": 19,
+    "total_decoded_duration_s": 358.7,
+    "total_decoded_audio_hours": 0.0996,
+    "openslr_verified_clips": [
+      {
+        "filename": "librispeech_2277-149896-0000.flac",
+        "archive_source": "http://www.openslr.org/resources/12/dev-clean.tar.gz (LibriSpeech/dev-clean/2277/149896/2277-149896-0000.flac)",
+        "bytes": 127816,
+        "sha256": "fead3e0c481f1c637fe6ec8edef42506c7c2d33a3fb7519bfdf5815b31150303",
+        "duration_s": 6.59,
+        "sample_rate": 16000
+      },
+      {
+        "filename": "librispeech_2277-149896-0001.flac",
+        "archive_source": "http://www.openslr.org/resources/12/dev-clean.tar.gz (LibriSpeech/dev-clean/2277/149896/2277-149896-0001.flac)",
+        "bytes": 133145,
+        "sha256": "f9c3371b4d1c6e95e7c01298a26215c2be97bee22c5408885d8d29b6e0e4171c",
+        "duration_s": 7.145,
+        "sample_rate": 16000
+      },
+      {
+        "filename": "librispeech_2277-149896-0002.flac",
+        "archive_source": "http://www.openslr.org/resources/12/dev-clean.tar.gz (LibriSpeech/dev-clean/2277/149896/2277-149896-0002.flac)",
+        "bytes": 90701,
+        "sha256": "ade2caad47934462292358ba49acf7f048ced0595615492b4b20866d118bf901",
+        "duration_s": 4.835,
+        "sample_rate": 16000
+      }
+    ]
   },
   "outputs": {
-    "items_in": 19,
-    "items_out": 19,
+    "items_evaluated": 19,
+    "items_registered": 18,
+    "items_quarantined": 1,
+    "quarantined_items": [
+      {
+        "item_id": "smoke_test_fixtures_truncated",
+        "filename": "truncated.wav",
+        "stage": "ingest",
+        "reason_code": "DECODE_FAIL",
+        "error_message": "DECODE_FAIL: duration mismatch (header: 2.000s, decoded: 0.001s)"
+      }
+    ],
     "manifest_path": "data/manifest.parquet",
-    "test_suite_passed": 26,
+    "test_suite_passed": 31,
     "test_suite_failed": 0,
-    "test_suite_duration_s": 1.49,
+    "test_suite_duration_s": 1.74,
     "total_project_coverage_pct": 86.0
   },
   "metrics": [
@@ -82,15 +114,31 @@
       "status": "PASS"
     },
     {
-      "name": "download_io_coverage",
-      "value": 80.0,
+      "name": "cli_coverage",
+      "value": 90.0,
+      "unit": "%",
+      "type": "Measured",
+      "target": 80.0,
+      "status": "PASS"
+    },
+    {
+      "name": "io_download_coverage",
+      "value": 81.0,
       "unit": "%",
       "type": "Measured",
       "target": 75.0,
       "status": "PASS"
     },
     {
-      "name": "resumable_download_checksum_pass_rate",
+      "name": "io_decode_coverage",
+      "value": 75.0,
+      "unit": "%",
+      "type": "Measured",
+      "target": 70.0,
+      "status": "PASS"
+    },
+    {
+      "name": "quarantine_precision_recall",
       "value": 100.0,
       "unit": "%",
       "type": "Measured",
@@ -98,11 +146,11 @@
       "status": "PASS"
     },
     {
-      "name": "valid_fixture_duration",
-      "value": 358.7,
-      "unit": "seconds",
+      "name": "openslr_checksum_match_rate",
+      "value": 100.0,
+      "unit": "%",
       "type": "Measured",
-      "target": 300.0,
+      "target": 100.0,
       "status": "PASS"
     }
   ]

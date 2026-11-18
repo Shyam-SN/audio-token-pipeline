@@ -8,6 +8,7 @@ import pyarrow.parquet as pq
 import pytest
 
 from audio_token_pipeline.catalog import Catalog
+from audio_token_pipeline.io.decode import decode_and_verify_audio
 from audio_token_pipeline.io.download import (
     build_manifest_parquet,
     compute_file_sha256,
@@ -97,14 +98,61 @@ def test_build_manifest_parquet(tmp_path: Path) -> None:
     assert manifest_out.exists()
     table = pq.read_table(str(manifest_out))
     records = table.to_pylist()
-    assert len(records) >= 15  # All generated fixture files + real LibriSpeech clips
+    # 18 valid files registered into manifest
+    assert len(records) == 18
     assert "source_id" in table.column_names
     assert "sha256" in table.column_names
     assert "duration_s" in table.column_names
 
-    # Verify DuckDB was populated
+    # Verify DuckDB: 18 registered, 1 quarantined (truncated.wav)
     summary = catalog.get_stage_status_summary()
-    assert summary["sources_total"] == len(records)
+    assert summary["sources_total"] == 18
+    assert summary["dead_letter"] == 1
+
+    dead_letters = catalog.get_dead_letters()
+    assert len(dead_letters) == 1
+    assert dead_letters[0]["reason_code"] == "DECODE_FAIL"
+    assert "truncated" in dead_letters[0]["item_id"]
+
+
+def test_decode_all_fixtures_integrity() -> None:
+    """Test full decoding of every fixture verifying rate, channels, duration and official SHA-256."""
+    fixtures = [p for p in sorted(FIXTURES_DIR.glob("*.*")) if p.suffix not in (".py", ".parquet", ".txt")]
+    assert len(fixtures) == 19, f"Expected 19 fixture files, found {len(fixtures)}"
+
+    valid_count = 0
+    quarantine_count = 0
+
+    # Official published SHA-256 checksums from OpenSLR dev-clean.tar.gz
+    official_openslr_hashes = {
+        "librispeech_2277-149896-0000.flac": "fead3e0c481f1c637fe6ec8edef42506c7c2d33a3fb7519bfdf5815b31150303",
+        "librispeech_2277-149896-0001.flac": "f9c3371b4d1c6e95e7c01298a26215c2be97bee22c5408885d8d29b6e0e4171c",
+        "librispeech_2277-149896-0002.flac": "ade2caad47934462292358ba49acf7f048ced0595615492b4b20866d118bf901",
+    }
+
+    for fpath in fixtures:
+        is_valid, meta, err = decode_and_verify_audio(fpath)
+        if fpath.name == "truncated.wav":
+            assert not is_valid, "truncated.wav must fail decode verification"
+            assert err is not None and "DECODE_FAIL" in err
+            quarantine_count += 1
+        else:
+            assert is_valid, f"Fixture {fpath.name} failed decode verification: {err}"
+            valid_count += 1
+            assert meta["sample_rate"] in (16000, 24000, 44100, 48000)
+            assert meta["channels"] in (1, 2)
+            assert meta["duration_s"] > 0
+            assert meta["num_samples"] == int(round(meta["duration_s"] * meta["sample_rate"]))
+
+            # Verify official LibriSpeech files against OpenSLR archive checksums
+            if fpath.name in official_openslr_hashes:
+                file_sha = compute_file_sha256(fpath)
+                assert file_sha == official_openslr_hashes[fpath.name], (
+                    f"SHA-256 mismatch for {fpath.name}: expected {official_openslr_hashes[fpath.name]}, got {file_sha}"
+                )
+
+    assert valid_count == 18
+    assert quarantine_count == 1
 
 
 def test_download_file_resumable_full(tmp_path: Path) -> None:
